@@ -1,0 +1,1661 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+<title>RentHouse｜租屋平台</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+<style>
+
+:root{
+    --primary:#5b67f1;
+    --primary-light:#eef2ff;
+    --secondary:#8b5cf6;
+    --dark:#111827;
+    --gray:#6b7280;
+    --light:#f8fafc;
+    --white:#ffffff;
+    --border:#e5e7eb;
+    --success:#10b981;
+    --danger:#ef4444;
+    --shadow:
+        0 10px 40px rgba(15,23,42,0.08);
+}
+
+*{
+    box-sizing:border-box;
+}
+
+body{
+    margin:0;
+    font-family:"Microsoft JhengHei",sans-serif;
+    background:
+        linear-gradient(180deg,#f8fbff 0%,#f3f4ff 100%);
+    color:#374151;
+}
+
+/* ===================== NAVBAR ===================== */
+
+.navbar{
+    background:rgba(255,255,255,0.82)!important;
+    backdrop-filter:blur(18px);
+    border-bottom:1px solid rgba(255,255,255,0.7);
+    padding:18px 0;
+}
+
+.navbar-brand{
+    font-size:1.5rem;
+    font-weight:900;
+    color:var(--dark)!important;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.brand-icon{
+    width:42px;
+    height:42px;
+    border-radius:14px;
+    background:
+        linear-gradient(135deg,var(--primary),var(--secondary));
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:white;
+    font-size:18px;
+}
+
+.nav-link{
+    cursor:pointer;
+    margin-left:12px;
+    font-weight:700;
+    color:#4b5563!important;
+    position:relative;
+}
+
+.nav-link:hover{
+    color:var(--primary)!important;
+}
+
+.nav-link::after{
+    content:'';
+    position:absolute;
+    left:0;
+    bottom:-6px;
+    width:0;
+    height:3px;
+    border-radius:10px;
+    background:var(--primary);
+    transition:0.3s;
+}
+
+.nav-link:hover::after{
+    width:100%;
+}
+
+/* ===================== PAGE ===================== */
+
+.page{
+    display:none;
+}
+
+.active-page{
+    display:block;
+    animation:fade 0.45s ease;
+}
+
+@keyframes fade{
+    from{
+        opacity:0;
+        transform:translateY(12px);
+    }
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
+}
+
+/* ===================== HERO ===================== */
+
+.hero{
+    margin-top:30px;
+    border-radius:42px;
+    padding:70px;
+    background:
+        linear-gradient(145deg,#ffffff,#eef2ff);
+    position:relative;
+    overflow:hidden;
+    box-shadow:var(--shadow);
+}
+
+.blur{
+    position:absolute;
+    border-radius:50%;
+    filter:blur(90px);
+    opacity:0.4;
+}
+
+.blur-1{
+    width:320px;
+    height:320px;
+    background:#a5b4fc;
+    top:-100px;
+    left:-80px;
+}
+
+.blur-2{
+    width:260px;
+    height:260px;
+    background:#c4b5fd;
+    bottom:-80px;
+    right:-60px;
+}
+
+.hero-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    padding:12px 18px;
+    border-radius:999px;
+    background:white;
+    color:var(--primary);
+    font-weight:800;
+    box-shadow:
+        0 8px 20px rgba(99,102,241,0.12);
+}
+
+.hero-title{
+    font-size:4rem;
+    font-weight:900;
+    line-height:1.2;
+    letter-spacing:-2px;
+    color:var(--dark);
+}
+
+.hero-title span{
+    color:var(--primary);
+}
+
+.hero-desc{
+    font-size:1.08rem;
+    line-height:2;
+    color:var(--gray);
+    max-width:560px;
+}
+
+.hero-search{
+    background:white;
+    border-radius:24px;
+    padding:18px;
+    margin-top:34px;
+    box-shadow:
+        0 10px 25px rgba(15,23,42,0.06);
+}
+
+.hero-search input{
+    border:none!important;
+    box-shadow:none!important;
+    background:#f8fafc;
+    border-radius:16px;
+    padding:14px;
+}
+
+.hero-images{
+    position:relative;
+    height:520px;
+}
+
+.hero-img{
+    position:absolute;
+    overflow:hidden;
+    border-radius:30px;
+    box-shadow:
+        0 18px 40px rgba(15,23,42,0.12);
+}
+
+.hero-img img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+
+.hero-main{
+    width:70%;
+    height:400px;
+    right:0;
+    top:70px;
+}
+
+.hero-small1{
+    width:38%;
+    height:200px;
+    left:0;
+    top:0;
+}
+
+.hero-small2{
+    width:42%;
+    height:220px;
+    left:40px;
+    bottom:10px;
+}
+
+/* ===================== BUTTON ===================== */
+
+.btn-modern{
+    background:
+        linear-gradient(135deg,var(--primary),var(--secondary));
+    color:white;
+    border:none;
+    border-radius:18px;
+    padding:14px 26px;
+    font-weight:800;
+    transition:0.3s;
+    box-shadow:
+        0 10px 20px rgba(99,102,241,0.2);
+}
+
+.btn-modern:hover{
+    transform:translateY(-3px);
+    opacity:0.95;
+}
+
+.btn-light-modern{
+    background:white;
+    border:1px solid var(--border);
+    border-radius:18px;
+    padding:14px 26px;
+    font-weight:800;
+}
+
+/* ===================== CARD ===================== */
+
+.card-modern{
+    background:white;
+    border-radius:30px;
+    padding:30px;
+    box-shadow:var(--shadow);
+    border:1px solid rgba(255,255,255,0.7);
+}
+
+.feature-card{
+    height:100%;
+    transition:0.35s;
+}
+
+.feature-card:hover{
+    transform:translateY(-8px);
+}
+
+.feature-icon{
+    width:72px;
+    height:72px;
+    border-radius:24px;
+    background:
+        linear-gradient(135deg,var(--primary),var(--secondary));
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:white;
+    font-size:24px;
+    margin-bottom:24px;
+}
+
+/* ===================== STATS ===================== */
+
+.stats{
+    margin-top:30px;
+}
+
+.stat-box{
+    background:white;
+    border-radius:24px;
+    padding:24px;
+    text-align:center;
+    box-shadow:var(--shadow);
+}
+
+.stat-number{
+    font-size:2rem;
+    font-weight:900;
+    color:var(--primary);
+}
+
+/* ===================== FORM ===================== */
+
+.form-control,
+.form-select{
+    border-radius:16px;
+    padding:14px;
+    border:1px solid #dbe2ea;
+}
+
+.form-control:focus,
+.form-select:focus{
+    border-color:var(--primary);
+    box-shadow:none;
+}
+
+/* ===================== HOUSE CARD ===================== */
+
+.house-card{
+    background:white;
+    border-radius:28px;
+    overflow:hidden;
+    box-shadow:var(--shadow);
+    transition:0.35s;
+    height:100%;
+}
+
+.house-card:hover{
+    transform:translateY(-8px);
+}
+
+.house-img-wrap{
+    position:relative;
+}
+
+.house-img{
+    width:100%;
+    height:240px;
+    object-fit:cover;
+}
+
+.house-badge{
+    position:absolute;
+    top:16px;
+    left:16px;
+    background:white;
+    color:var(--primary);
+    padding:8px 14px;
+    border-radius:999px;
+    font-size:0.85rem;
+    font-weight:800;
+}
+
+.house-body{
+    padding:24px;
+}
+
+.house-title{
+    font-weight:800;
+    color:var(--dark);
+}
+
+.house-price{
+    font-size:1.35rem;
+    color:var(--danger);
+    font-weight:900;
+}
+
+.house-meta{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-top:14px;
+}
+
+.meta-pill{
+    background:#f3f4f6;
+    padding:8px 14px;
+    border-radius:999px;
+    font-size:0.88rem;
+    color:#4b5563;
+}
+
+.favorite-btn{
+    border:none;
+    width:46px;
+    height:46px;
+    border-radius:16px;
+    background:#f3f4f6;
+    color:#c2c8d0;
+    transition:0.3s;
+}
+
+.favorite-btn.active{
+    background:#fee2e2;
+    color:#ef4444;
+}
+
+.favorite-btn:hover{
+    transform:scale(1.05);
+}
+
+/* ===================== DETAIL ===================== */
+
+.detail-img{
+    width:100%;
+    height:420px;
+    object-fit:cover;
+    border-radius:28px;
+}
+
+.feedback-item{
+    background:#f8fafc;
+    border-left:4px solid var(--primary);
+    border-radius:18px;
+    padding:18px;
+    margin-bottom:16px;
+}
+
+/* ===================== AUTH ===================== */
+
+.auth-box{
+    max-width:520px;
+    margin:auto;
+}
+
+.auth-title{
+    font-weight:900;
+    color:var(--dark);
+}
+
+/* ===================== FOOTER ===================== */
+
+.footer{
+    margin-top:60px;
+    padding:40px 20px;
+    text-align:center;
+    color:#6b7280;
+}
+
+/* ===================== MOBILE ===================== */
+
+@media(max-width:992px){
+
+    .hero{
+        padding:40px;
+    }
+
+    .hero-title{
+        font-size:2.7rem;
+    }
+
+    .hero-images{
+        height:400px;
+        margin-top:40px;
+    }
+
+    .hero-main{
+        height:280px;
+    }
+}
+
+@media(max-width:768px){
+
+    .hero{
+        padding:28px;
+        border-radius:28px;
+    }
+
+    .hero-title{
+        font-size:2rem;
+    }
+
+    .hero-images{
+        height:300px;
+    }
+
+    .hero-main{
+        height:220px;
+    }
+
+    .hero-small1{
+        height:120px;
+    }
+
+    .hero-small2{
+        height:140px;
+    }
+
+    .navbar-nav{
+        gap:8px;
+    }
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- NAVBAR -->
+
+<nav class="navbar navbar-expand-lg sticky-top">
+
+<div class="container">
+
+    <div class="navbar-brand" onclick="showPage('index')">
+
+        <div class="brand-icon">
+            <i class="fa-solid fa-house"></i>
+        </div>
+
+        RentHouse
+
+    </div>
+
+    <div class="navbar-nav ms-auto">
+
+        <a class="nav-link" onclick="showPage('search')">
+            探索房源
+        </a>
+
+        <a class="nav-link" onclick="showPage('favorite')">
+            我的收藏
+        </a>
+
+        <a class="nav-link" onclick="showPage('add')">
+            刊登房源
+        </a>
+
+        <a class="nav-link" onclick="showPage('login')">
+            登入
+        </a>
+
+        <a class="nav-link" onclick="showPage('register')">
+            註冊
+        </a>
+
+    </div>
+
+</div>
+
+</nav>
+
+<div class="container">
+
+<!-- ===================== HOME ===================== -->
+
+<div id="page-index" class="page active-page">
+
+<section class="hero">
+
+<div class="blur blur-1"></div>
+<div class="blur blur-2"></div>
+
+<div class="row align-items-center">
+
+<div class="col-lg-6">
+
+    <div class="hero-badge mb-4">
+        <i class="fa-solid fa-location-dot"></i>
+        找到適合自己的理想空間
+    </div>
+
+    <h1 class="hero-title mb-4">
+        找到讓你<br>
+        <span>真正想回家的地方</span>
+    </h1>
+
+    <p class="hero-desc">
+        用更舒服、更直覺的方式探索租屋空間，
+        從學生套房到家庭住宅，
+        讓每一次找房都變得輕鬆簡單。
+    </p>
+
+    <div class="hero-search">
+
+        <div class="row g-3 align-items-center">
+
+            <div class="col-md-5">
+                <input type="text"
+                    class="form-control"
+                    placeholder="搜尋地區">
+            </div>
+
+            <div class="col-md-4">
+                <input type="number"
+                    class="form-control"
+                    placeholder="預算上限">
+            </div>
+
+            <div class="col-md-3">
+                <button class="btn-modern w-100"
+                    onclick="showPage('search')">
+
+                    搜尋
+                </button>
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="stats">
+
+        <div class="row g-3">
+
+            <div class="col-4">
+
+                <div class="stat-box">
+
+                    <div class="stat-number">
+                        2K+
+                    </div>
+
+                    <small>
+                        精選房源
+                    </small>
+
+                </div>
+
+            </div>
+
+            <div class="col-4">
+
+                <div class="stat-box">
+
+                    <div class="stat-number">
+                        98%
+                    </div>
+
+                    <small>
+                        滿意度
+                    </small>
+
+                </div>
+
+            </div>
+
+            <div class="col-4">
+
+                <div class="stat-box">
+
+                    <div class="stat-number">
+                        24H
+                    </div>
+
+                    <small>
+                        即時更新
+                    </small>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div class="col-lg-6">
+
+    <div class="hero-images">
+
+        <div class="hero-img hero-main">
+            <img src="https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?q=80&w=1200&auto=format&fit=crop">
+        </div>
+
+        <div class="hero-img hero-small1">
+            <img src="https://images.unsplash.com/photo-1494526585095-c41746248156?q=80&w=1200&auto=format&fit=crop">
+        </div>
+
+        <div class="hero-img hero-small2">
+            <img src="https://images.unsplash.com/photo-1484154218962-a197022b5858?q=80&w=1200&auto=format&fit=crop">
+        </div>
+
+    </div>
+
+</div>
+
+</div>
+
+</section>
+
+<!-- FEATURES -->
+
+<div class="row g-4 py-5">
+
+<div class="col-md-4">
+
+    <div class="card-modern feature-card">
+
+        <div class="feature-icon">
+            <i class="fa-solid fa-house"></i>
+        </div>
+
+        <h4 class="fw-bold mb-3">
+            清楚好懂的房源資訊
+        </h4>
+
+        <p class="text-muted">
+            一眼查看價格、坪數與設備，
+            不再浪費時間反覆確認。
+        </p>
+
+    </div>
+
+</div>
+
+<div class="col-md-4">
+
+    <div class="card-modern feature-card">
+
+        <div class="feature-icon">
+            <i class="fa-solid fa-heart"></i>
+        </div>
+
+        <h4 class="fw-bold mb-3">
+            收藏與比較功能
+        </h4>
+
+        <p class="text-muted">
+            收藏喜歡的房源，
+            快速比較最適合自己的空間。
+        </p>
+
+    </div>
+
+</div>
+
+<div class="col-md-4">
+
+    <div class="card-modern feature-card">
+
+        <div class="feature-icon">
+            <i class="fa-solid fa-comments"></i>
+        </div>
+
+        <h4 class="fw-bold mb-3">
+            真實租客回饋
+        </h4>
+
+        <p class="text-muted">
+            查看其他租客的實際生活心得，
+            降低踩雷風險。
+        </p>
+
+    </div>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- ===================== LOGIN ===================== -->
+
+<div id="page-login" class="page py-5">
+
+<div class="auth-box">
+
+<div class="card-modern">
+
+    <div class="text-center mb-4">
+
+        <h2 class="auth-title">
+            歡迎回來
+        </h2>
+
+        <p class="text-muted">
+            登入你的 RentHouse 帳號
+        </p>
+
+    </div>
+
+    <div class="mb-3">
+
+        <label class="form-label fw-bold">
+            Email
+        </label>
+
+        <input type="email"
+            id="login-email"
+            class="form-control">
+
+    </div>
+
+    <div class="mb-4">
+
+        <label class="form-label fw-bold">
+            密碼
+        </label>
+
+        <input type="password"
+            id="login-password"
+            class="form-control">
+
+    </div>
+
+    <button class="btn-modern w-100"
+        onclick="login()">
+
+        登入帳號
+    </button>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- ===================== REGISTER ===================== -->
+
+<div id="page-register" class="page py-5">
+
+<div class="auth-box">
+
+<div class="card-modern">
+
+    <div class="text-center mb-4">
+
+        <h2 class="auth-title">
+            建立帳號
+        </h2>
+
+        <p class="text-muted">
+            加入 RentHouse 開始找房
+        </p>
+
+    </div>
+
+    <div class="mb-3">
+
+        <label class="form-label fw-bold">
+            姓名
+        </label>
+
+        <input type="text"
+            id="reg-name"
+            class="form-control">
+
+    </div>
+
+    <div class="mb-3">
+
+        <label class="form-label fw-bold">
+            Email
+        </label>
+
+        <input type="email"
+            id="reg-email"
+            class="form-control">
+
+    </div>
+
+    <div class="mb-3">
+
+        <label class="form-label fw-bold">
+            密碼
+        </label>
+
+        <input type="password"
+            id="reg-password"
+            class="form-control">
+
+    </div>
+
+    <div class="mb-4">
+
+        <label class="form-label fw-bold">
+            身份
+        </label>
+
+        <select id="reg-role"
+            class="form-select">
+
+            <option value="tenant">
+                房客
+            </option>
+
+            <option value="landlord">
+                房東
+            </option>
+
+        </select>
+
+    </div>
+
+    <button class="btn-modern w-100"
+        onclick="register()">
+
+        註冊帳號
+    </button>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- ===================== SEARCH ===================== -->
+
+<div id="page-search" class="page py-5">
+
+<div class="row">
+
+<div class="col-lg-4 mb-4">
+
+<div class="card-modern">
+
+    <h3 class="fw-bold mb-4">
+        搜尋房源
+    </h3>
+
+    <div class="mb-3">
+
+        <label class="form-label fw-bold">
+            地區
+        </label>
+
+        <input type="text"
+            id="search-loc"
+            class="form-control"
+            placeholder="例如：高雄">
+
+    </div>
+
+    <div class="mb-4">
+
+        <label class="form-label fw-bold">
+            最高租金
+        </label>
+
+        <input type="number"
+            id="search-price"
+            class="form-control"
+            placeholder="例如：12000">
+
+    </div>
+
+    <button class="btn-modern w-100"
+        onclick="renderSearch()">
+
+        開始搜尋
+    </button>
+
+</div>
+
+</div>
+
+<div class="col-lg-8">
+
+<div class="row g-4"
+    id="search-results">
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- ===================== DETAIL ===================== -->
+
+<div id="page-detail" class="page py-5">
+
+<div id="detail-content"></div>
+
+</div>
+
+<!-- ===================== FAVORITE ===================== -->
+
+<div id="page-favorite" class="page py-5">
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <div>
+
+        <h2 class="fw-bold mb-1">
+            我的收藏
+        </h2>
+
+        <div class="text-muted">
+            快速查看你喜歡的房源
+        </div>
+
+    </div>
+
+</div>
+
+<div class="row g-4"
+    id="favorite-list">
+
+</div>
+
+</div>
+
+<!-- ===================== ADD HOUSE ===================== -->
+
+<div id="page-add" class="page py-5">
+
+<div class="row justify-content-center">
+
+<div class="col-lg-8">
+
+<div class="card-modern">
+
+<h2 class="text-center fw-bold mb-2">
+    刊登房源
+</h2>
+
+<p class="text-center text-muted mb-5">
+    提供清楚完整的資訊，提升曝光效果
+</p>
+
+<div class="row g-3">
+
+<div class="col-md-6">
+
+<label class="form-label fw-bold">
+    地點
+</label>
+
+<input type="text"
+    id="add-loc"
+    class="form-control">
+
+</div>
+
+<div class="col-md-6">
+
+<label class="form-label fw-bold">
+    租金
+</label>
+
+<input type="number"
+    id="add-price"
+    class="form-control">
+
+</div>
+
+<div class="col-md-6">
+
+<label class="form-label fw-bold">
+    坪數
+</label>
+
+<input type="text"
+    id="add-size"
+    class="form-control">
+
+</div>
+
+<div class="col-md-6">
+
+<label class="form-label fw-bold">
+    房型
+</label>
+
+<input type="text"
+    id="add-type"
+    class="form-control">
+
+</div>
+
+<div class="col-12">
+
+<label class="form-label fw-bold">
+    設備
+</label>
+
+<input type="text"
+    id="add-equip"
+    class="form-control">
+
+</div>
+
+<div class="col-12">
+
+<label class="form-label fw-bold">
+    圖片網址
+</label>
+
+<input type="text"
+    id="add-image"
+    class="form-control">
+
+</div>
+
+</div>
+
+<button class="btn-modern w-100 mt-4"
+    onclick="addNewHouse()">
+
+    發布房源
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- FOOTER -->
+
+<div class="footer">
+    © 2026 RentHouse｜打造更舒服的租屋體驗
+</div>
+
+<script>
+
+/* USERS */
+
+let users = [
+
+{
+    name:"測試房東",
+    email:"landlord@test.com",
+    password:"1234",
+    role:"landlord"
+},
+
+{
+    name:"測試房客",
+    email:"tenant@test.com",
+    password:"1234",
+    role:"tenant"
+}
+
+];
+
+let currentUser = null;
+
+/* HOUSES */
+
+let houses = [
+
+{
+    id:1,
+    location:"高雄市鼓山區",
+    price:8500,
+    size:"7坪",
+    type:"獨立套房",
+    equipment:"冷氣、衣櫃、網路",
+    image:"https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?q=80&w=1200&auto=format&fit=crop",
+    feedbacks:[
+        {
+            score:5,
+            comment:"環境舒服，採光很好。"
+        }
+    ]
+},
+
+{
+    id:2,
+    location:"台中市西屯區",
+    price:12000,
+    size:"9坪",
+    type:"整層住家",
+    equipment:"洗衣機、冰箱",
+    image:"https://images.unsplash.com/photo-1494526585095-c41746248156?q=80&w=1200&auto=format&fit=crop",
+    feedbacks:[
+        {
+            score:4,
+            comment:"交通方便，附近生活機能很好。"
+        }
+    ]
+}
+
+];
+
+let favorites = [];
+
+/* PAGE */
+
+function showPage(pageId){
+
+    document.querySelectorAll('.page')
+    .forEach(page=>{
+        page.classList.remove('active-page');
+    });
+
+    document.getElementById('page-' + pageId)
+    .classList.add('active-page');
+
+    if(pageId === 'search'){
+        renderSearch();
+    }
+
+    if(pageId === 'favorite'){
+        renderFavorites();
+    }
+}
+
+/* REGISTER */
+
+function register(){
+
+    const name =
+        document.getElementById('reg-name').value;
+
+    const email =
+        document.getElementById('reg-email').value;
+
+    const password =
+        document.getElementById('reg-password').value;
+
+    const role =
+        document.getElementById('reg-role').value;
+
+    if(!name || !email || !password){
+
+        alert("請完整填寫資料");
+        return;
+    }
+
+    const exist =
+        users.find(u=>u.email === email);
+
+    if(exist){
+
+        alert("Email 已被註冊");
+        return;
+    }
+
+    users.push({
+        name,
+        email,
+        password,
+        role
+    });
+
+    alert("註冊成功！");
+    showPage('login');
+}
+
+/* LOGIN */
+
+function login(){
+
+    const email =
+        document.getElementById('login-email').value;
+
+    const password =
+        document.getElementById('login-password').value;
+
+    const user =
+        users.find(u=>
+
+            u.email === email
+
+            &&
+
+            u.password === password
+        );
+
+    if(!user){
+
+        alert("帳號或密碼錯誤");
+        return;
+    }
+
+    currentUser = user;
+
+    alert(`歡迎回來，${user.name}`);
+
+    showPage('index');
+}
+
+/* SEARCH */
+
+function renderSearch(){
+
+    const loc =
+        document.getElementById('search-loc')
+        .value
+        .toLowerCase();
+
+    const price =
+        document.getElementById('search-price')
+        .value;
+
+    const filtered =
+        houses.filter(h=>
+
+            h.location.toLowerCase().includes(loc)
+
+            &&
+
+            (!price || h.price <= price)
+
+        );
+
+    const result =
+        document.getElementById('search-results');
+
+    result.innerHTML = filtered.map(h=>`
+
+        <div class="col-md-6">
+
+            <div class="house-card">
+
+                <div class="house-img-wrap">
+
+                    <img src="${h.image}"
+                        class="house-img">
+
+                    <div class="house-badge">
+                        精選房源
+                    </div>
+
+                </div>
+
+                <div class="house-body">
+
+                    <div class="d-flex justify-content-between align-items-start">
+
+                        <div>
+
+                            <h5 class="house-title">
+                                ${h.location}
+                            </h5>
+
+                            <div class="house-price mt-2">
+                                NT$ ${h.price}
+                            </div>
+
+                        </div>
+
+                        <button class="favorite-btn
+                            ${favorites.includes(h.id) ? 'active':''}"
+
+                            onclick="toggleFavorite(${h.id})">
+
+                            <i class="fa-solid fa-heart"></i>
+
+                        </button>
+
+                    </div>
+
+                    <div class="house-meta">
+
+                        <div class="meta-pill">
+                            ${h.type}
+                        </div>
+
+                        <div class="meta-pill">
+                            ${h.size}
+                        </div>
+
+                    </div>
+
+                    <button class="btn-modern w-100 mt-4"
+                        onclick="showDetail(${h.id})">
+
+                        查看詳情
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    `).join('');
+}
+
+/* DETAIL */
+
+function showDetail(id){
+
+    const house =
+        houses.find(h=>h.id===id);
+
+    document.getElementById('detail-content')
+    .innerHTML = `
+
+        <div class="card-modern">
+
+            <img src="${house.image}"
+                class="detail-img mb-4">
+
+            <div class="d-flex flex-wrap
+                justify-content-between
+                align-items-center mb-4">
+
+                <div>
+
+                    <h2 class="fw-bold">
+                        ${house.location}
+                    </h2>
+
+                    <div class="house-price">
+                        NT$ ${house.price} / 月
+                    </div>
+
+                </div>
+
+                <button class="btn-modern">
+                    立即聯絡房東
+                </button>
+
+            </div>
+
+            <div class="row g-3 mb-4">
+
+                <div class="col-md-4">
+
+                    <div class="meta-pill text-center py-3">
+                        🏠 ${house.type}
+                    </div>
+
+                </div>
+
+                <div class="col-md-4">
+
+                    <div class="meta-pill text-center py-3">
+                        📐 ${house.size}
+                    </div>
+
+                </div>
+
+                <div class="col-md-4">
+
+                    <div class="meta-pill text-center py-3">
+                        ⭐ 高評價房源
+                    </div>
+
+                </div>
+
+            </div>
+
+            <h4 class="fw-bold mb-3">
+                設備資訊
+            </h4>
+
+            <p class="mb-5">
+                ${house.equipment}
+            </p>
+
+            <h4 class="fw-bold mb-3">
+                房客評論
+            </h4>
+
+            ${
+                house.feedbacks.map(f=>`
+
+                    <div class="feedback-item">
+
+                        <div class="text-warning mb-2">
+                            ${'⭐'.repeat(f.score)}
+                        </div>
+
+                        ${f.comment}
+
+                    </div>
+
+                `).join('')
+            }
+
+        </div>
+
+    `;
+
+    showPage('detail');
+}
+
+/* FAVORITE */
+
+function toggleFavorite(id){
+
+    if(favorites.includes(id)){
+
+        favorites =
+            favorites.filter(f=>f!==id);
+
+    }else{
+
+        favorites.push(id);
+    }
+
+    renderSearch();
+}
+
+function renderFavorites(){
+
+    const favoriteHouses =
+        houses.filter(h=>
+            favorites.includes(h.id)
+        );
+
+    const div =
+        document.getElementById('favorite-list');
+
+    if(favoriteHouses.length === 0){
+
+        div.innerHTML = `
+
+            <div class="col-12">
+
+                <div class="card-modern text-center">
+
+                    <h4 class="fw-bold mb-3">
+                        尚未收藏房源
+                    </h4>
+
+                    <p class="text-muted">
+                        快去探索喜歡的空間吧！
+                    </p>
+
+                </div>
+
+            </div>
+
+        `;
+
+        return;
+    }
+
+    div.innerHTML = favoriteHouses.map(h=>`
+
+        <div class="col-md-6">
+
+            <div class="house-card">
+
+                <img src="${h.image}"
+                    class="house-img">
+
+                <div class="house-body">
+
+                    <h5 class="fw-bold">
+                        ${h.location}
+                    </h5>
+
+                    <div class="house-price mb-3">
+                        NT$ ${h.price}
+                    </div>
+
+                    <button class="btn-modern w-100"
+                        onclick="showDetail(${h.id})">
+
+                        查看詳情
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    `).join('');
+}
+
+/* ADD HOUSE */
+
+function addNewHouse(){
+
+    if(!currentUser){
+
+        alert("請先登入");
+        showPage('login');
+        return;
+    }
+
+    if(currentUser.role !== 'landlord'){
+
+        alert("只有房東可以刊登房源");
+        return;
+    }
+
+    const location =
+        document.getElementById('add-loc').value;
+
+    const price =
+        document.getElementById('add-price').value;
+
+    const size =
+        document.getElementById('add-size').value;
+
+    const type =
+        document.getElementById('add-type').value;
+
+    const equipment =
+        document.getElementById('add-equip').value;
+
+    const image =
+        document.getElementById('add-image').value;
+
+    if(!location || !price){
+
+        alert("請填寫必要資料");
+        return;
+    }
+
+    houses.push({
+
+        id:houses.length + 1,
+
+        location,
+
+        price:Number(price),
+
+        size,
+
+        type,
+
+        equipment,
+
+        image:image ||
+
+        "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=1200&auto=format&fit=crop",
+
+        feedbacks:[]
+
+    });
+
+    alert("刊登成功！");
+
+    showPage('search');
+}
+
+/* INIT */
+
+renderSearch();
+
+</script>
+
+</body>
+</html>
