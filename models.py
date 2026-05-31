@@ -89,3 +89,17 @@ class RenterPreference(db.Model):
     max_budget = db.Column(db.Integer)
     move_date = db.Column(db.String(50)) # 預計搬入日期
     room_type = db.Column(db.String(50)) # 期望房型
+
+# ==============================================================================
+# 6. 租客收藏房屋關聯表 (多對多)
+# ==============================================================================
+class Favorite(db.Model):
+    __tablename__ = 'favorites'
+    
+    user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), primary_key=True)
+    house_id = db.Column(db.Integer, db.ForeignKey('houses.house_id'), primary_key=True)    # 同一個租客對同一間房只能收藏一次
+    created_at = db.Column(db.String(50), default=lambda: datetime.now().strftime('%Y-%m-%d %H:%M:%S')) # 收藏的時間（例如：依收藏時間排序）
+
+    # 建立 ORM 關聯
+    user = db.relationship('User', backref=db.backref('my_favorites', lazy='dynamic'))
+    house = db.relationship('House', backref=db.backref('favorited_by', lazy='dynamic'))
