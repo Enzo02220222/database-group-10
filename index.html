@@ -1225,45 +1225,48 @@ function showPage(pageId){
 }
 
 /* REGISTER */
+async function register(){
 
-function register(){
-
-    const name =
-        document.getElementById('reg-name').value;
-
-    const email =
-        document.getElementById('reg-email').value;
-
-    const password =
-        document.getElementById('reg-password').value;
-
-    const role =
-        document.getElementById('reg-role').value;
+    const name = document.getElementById('reg-name').value;
+    const email = document.getElementById('reg-email').value;
+    const password = document.getElementById('reg-password').value;
+    const role = document.getElementById('reg-role').value;
+    const phone = "0900123456"; // 預設一個空電話
 
     if(!name || !email || !password){
-
         alert("請完整填寫資料");
         return;
     }
 
-    const exist =
-        users.find(u=>u.email === email);
+    try {
+        // 使用 fetch 發送 POST 請求給 Flask
+        const response = await fetch('http://127.0.0.1:5000/api/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                name: name,
+                email: email,
+                password: password,
+                phone: phone,
+                role: role
+            })
+        });
 
-    if(exist){
+        const result = await response.json();
 
-        alert("Email 已被註冊");
-        return;
+        if (response.ok) {
+            alert(result.message);
+            showPage('login');
+        } else {
+            alert(result.message);
+        }
+
+    } catch (error) {
+        console.error('錯誤:', error);
+        alert('無法連線到後端伺服器');
     }
-
-    users.push({
-        name,
-        email,
-        password,
-        role
-    });
-
-    alert("註冊成功！");
-    showPage('login');
 }
 
 /* LOGIN */
