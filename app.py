@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from sqlalchemy import inspect, text
 from models import db, User
 from models import Favorite, HouseFeedback
 
@@ -12,6 +13,26 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # 2. 與 Flask app 綁定
 db.init_app(app)
+
+
+def _ensure_schema():
+    """補齊舊版資料庫缺少的欄位，避免 create_all 無法自動升級既有表結構。"""
+    db.create_all()
+
+    inspector = inspect(db.engine)
+    if not inspector.has_table('renter_preferences'):
+        return
+
+    existing_columns = {
+        column['name']
+        for column in inspector.get_columns('renter_preferences')
+    }
+    if 'preferred_area' not in existing_columns:
+        with db.engine.begin() as connection:
+            connection.execute(text(
+                "ALTER TABLE renter_preferences "
+                "ADD COLUMN preferred_area VARCHAR(50)"
+            ))
 
 # ==============================================================================
 
@@ -60,6 +81,9 @@ def register():
     password = data.get('password')
     phone = data.get('phone')
     role = data.get('role')
+    age = data.get('age')
+    gender = data.get('gender')
+    job = data.get('job')
     
     # 檢查必要欄位是否存在
     if not name or not email or not password:
@@ -78,7 +102,10 @@ def register():
         email=email,
         password=password,   # 尚未加密
         phone=phone,
-        role=role
+        role=role,
+        age=int(age) if age else None,
+        gender=gender,
+        job=job
     )
     
     # 把新物件存入資料庫並提交存檔
@@ -194,194 +221,468 @@ def handle_single_house_api(house_id):
 # ==============================================================================
 # 三、互動與社交功能 API (收藏夾、評論與星等計算)
 # ==============================================================================
-from models import Favorite, HouseFeedback
+from models import RenterPreference, HousePreference
+
+DEFAULT_HOUSE_IMAGE = (
+    "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85"
+    "?q=80&w=1200&auto=format&fit=crop"
+)
+
+MATCH_THRESHOLD = 50
+MATCH_WEIGHTS = {
+    "budget": 40,
+    "room_type": 30,
+    "area": 15,
+    "landlord_rating": 15,
+}
+
+SIMILAR_ROOM_TYPES = {
+    "獨立套房": {"獨立套房", "分租套房"},
+    "分租套房": {"獨立套房", "分租套房", "雅房"},
+    "雅房": {"分租套房", "雅房"},
+    "整層住家": {"整層住家"},
+}
+
+
+def _serialize_house(h, **extra):
+    payload = {
+        "id": h.house_id,
+        "landlord_id": h.landlord_id,
+        "location": h.location,
+        "area": h.area,
+        "price": h.price,
+        "size": h.size,
+        "type": h.type,
+        "equipment": h.equipment,
+        "image": DEFAULT_HOUSE_IMAGE,
+    }
+    payload.update(extra)
+    return payload
+
+
+def _is_renter(user):
+    return user is not None and user.role in ("tenant", "renter")
+
+
+def _get_house_feedback_stats(house_id):
+    feedbacks = HouseFeedback.query.filter_by(house_id=house_id).all()
+    if not feedbacks:
+        return 0.0, 0
+    avg_score = sum(f.score for f in feedbacks) / len(feedbacks)
+    return round(avg_score, 1), len(feedbacks)
+
+
+def _update_landlord_rating(landlord_id):
+    landlord = User.query.get(landlord_id)
+    if not landlord:
+        return None
+
+    house_ids = [
+        h.house_id for h in House.query.filter_by(landlord_id=landlord_id).all()
+    ]
+    if not house_ids:
+        landlord.rating = 0.0
+        db.session.commit()
+        return 0.0
+
+    feedbacks = HouseFeedback.query.filter(
+        HouseFeedback.house_id.in_(house_ids)
+    ).all()
+    landlord.rating = (
+        round(sum(f.score for f in feedbacks) / len(feedbacks), 1)
+        if feedbacks else 0.0
+    )
+    db.session.commit()
+    return landlord.rating
+
+
+def _calc_budget_score(price, min_budget, max_budget):
+    min_budget = min_budget or 0
+    max_budget = max_budget or 999999
+    weight = MATCH_WEIGHTS["budget"]
+
+    if min_budget <= price <= max_budget:
+        return weight, "租金符合預算區間"
+
+    if price > max_budget:
+        over_ratio = (price - max_budget) / max(max_budget, 1)
+        if over_ratio >= 0.5:
+            return 0, "租金明顯超出最高預算"
+        partial = max(0, int(weight * (1 - over_ratio * 2)))
+        return partial, "租金略高於最高預算"
+
+    under_ratio = (min_budget - price) / max(min_budget, 1)
+    partial = max(0, int(weight * (1 - min(under_ratio, 1))))
+    return partial, "租金低於最低預算"
+
+
+def _calc_room_type_score(expected_type, actual_type):
+    weight = MATCH_WEIGHTS["room_type"]
+    if not expected_type or expected_type == actual_type:
+        return weight, "房型完全符合"
+
+    similar_types = SIMILAR_ROOM_TYPES.get(expected_type, {expected_type})
+    if actual_type in similar_types:
+        return int(weight * 0.5), "房型相近"
+
+    return 0, "房型不符"
+
+
+def _calc_area_score(preferred_area, house):
+    weight = MATCH_WEIGHTS["area"]
+    if not preferred_area:
+        return weight, "未設定地區偏好"
+
+    preferred_area = preferred_area.strip()
+    if preferred_area in house.area or preferred_area in house.location:
+        return weight, "地區完全符合"
+
+    if house.area in preferred_area or house.location.startswith(preferred_area):
+        return int(weight * 0.6), "地區部分符合"
+
+    return 0, "地區不符"
+
+
+def _calc_landlord_rating_score(landlord):
+    weight = MATCH_WEIGHTS["landlord_rating"]
+    if not landlord or not landlord.rating:
+        return int(weight * 0.4), "房東尚無評價紀錄"
+
+    normalized = min(max(landlord.rating, 0), 5) / 5
+    return round(weight * normalized), f"房東評價 {landlord.rating} 星"
+
+
+def _calc_match_score(house, pref):
+    landlord = User.query.get(house.landlord_id)
+    breakdown = {}
+
+    budget_score, budget_reason = _calc_budget_score(
+        house.price, pref.min_budget, pref.max_budget
+    )
+    room_score, room_reason = _calc_room_type_score(pref.room_type, house.type)
+    area_score, area_reason = _calc_area_score(pref.preferred_area, house)
+    rating_score, rating_reason = _calc_landlord_rating_score(landlord)
+
+    breakdown["budget"] = {"score": budget_score, "reason": budget_reason}
+    breakdown["room_type"] = {"score": room_score, "reason": room_reason}
+    breakdown["area"] = {"score": area_score, "reason": area_reason}
+    breakdown["landlord_rating"] = {"score": rating_score, "reason": rating_reason}
+
+    total_score = budget_score + room_score + area_score + rating_score
+    return total_score, breakdown
+
+
+def _serialize_preference(pref):
+    return {
+        "renter_id": pref.renter_id,
+        "room_type": pref.room_type,
+        "min_budget": pref.min_budget,
+        "max_budget": pref.max_budget,
+        "preferred_area": pref.preferred_area or "",
+        "move_date": pref.move_date,
+    }
+
 
 # ［3-1. 收藏夾：切換收藏狀態 (POST)］
 @app.route('/api/favorites/toggle', methods=['POST'])
 def toggle_favorite_api():
-    data = request.get_json()
+    data = request.get_json() or {}
     user_id = data.get('user_id')
     house_id = data.get('house_id')
-    
+
     if not user_id or not house_id:
         return jsonify({"message": "缺少使用者 ID 或房屋 ID"}), 400
-        
-    # 檢查是否已經收藏過
+
+    user = User.query.get(int(user_id))
+    if not user:
+        return jsonify({"message": "找不到該使用者"}), 404
+
+    house = House.query.get(int(house_id))
+    if not house:
+        return jsonify({"message": "找不到該房源"}), 404
+
     fav = Favorite.query.filter_by(user_id=user_id, house_id=house_id).first()
-    
+
     if fav:
-        # 已存在則取消收藏 (Unfavorite)
         db.session.delete(fav)
         db.session.commit()
-        return jsonify({"message": "已取消收藏", "status": "removed"}), 200
-    else:
-        # 不存在則新增收藏 (Favorite)
-        new_fav = Favorite(user_id=user_id, house_id=house_id)
-        db.session.add(new_fav)
-        db.session.commit()
-        return jsonify({"message": "已成功加入收藏夾！", "status": "added"}), 200
+        return jsonify({
+            "message": "已取消收藏",
+            "status": "removed",
+            "house_id": house_id,
+        }), 200
+
+    if not house.visibility:
+        return jsonify({"message": "此房源已下架，無法收藏"}), 400
+
+    new_fav = Favorite(user_id=user_id, house_id=house_id)
+    db.session.add(new_fav)
+    db.session.commit()
+    return jsonify({
+        "message": "已成功加入收藏夾！",
+        "status": "added",
+        "house_id": house_id,
+    }), 200
+
 
 # ［3-2. 收藏夾：讀取該使用者收藏的房源清單 (GET)］
 @app.route('/api/favorites/<int:user_id>', methods=['GET'])
 def get_user_favorites_api(user_id):
-    # 透過關聯表格進行查詢
-    favs = Favorite.query.filter_by(user_id=user_id).all()
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"message": "找不到該使用者"}), 404
+
+    favs = Favorite.query.filter_by(user_id=user_id).order_by(
+        Favorite.created_at.desc()
+    ).all()
+
+    if not favs:
+        return jsonify([]), 200
+
     house_ids = [f.house_id for f in favs]
-    
-    # 撈出所有收藏且未下架的房屋細節
-    fav_houses = House.query.filter(House.house_id.in_(house_ids), House.visibility == True).all()
-    
+    fav_houses = House.query.filter(
+        House.house_id.in_(house_ids),
+        House.visibility == True,
+    ).all()
+    house_map = {h.house_id: h for h in fav_houses}
+
     results = []
-    for h in fav_houses:
-        results.append({
-            "id": h.house_id,
-            "location": h.location,
-            "price": h.price,
-            "size": h.size,
-            "type": h.type,
-            "equipment": h.equipment
-        })
+    for fav in favs:
+        house = house_map.get(fav.house_id)
+        if not house:
+            continue
+        avg_score, review_count = _get_house_feedback_stats(house.house_id)
+        results.append(_serialize_house(
+            house,
+            favorited_at=fav.created_at,
+            avg_score=avg_score,
+            review_count=review_count,
+        ))
+
     return jsonify(results), 200
 
-# ［3-3. 房屋評論：新增評論並動態更新房東綜合評分 (POST)］
+
+# ［3-3. 收藏夾：查詢使用者已收藏的房源 ID 清單 (GET)］
+@app.route('/api/favorites/<int:user_id>/ids', methods=['GET'])
+def get_user_favorite_ids_api(user_id):
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"message": "找不到該使用者"}), 404
+
+    house_ids = [
+        fav.house_id
+        for fav in Favorite.query.filter_by(user_id=user_id).all()
+    ]
+    return jsonify({"house_ids": house_ids}), 200
+
+
+# ［3-4. 房屋評論：新增評論並動態更新房東綜合評分 (POST)］
 @app.route('/api/houses/<int:house_id>/feedback', methods=['POST'])
 def add_house_feedback_api(house_id):
-    data = request.get_json()
+    house = House.query.get(house_id)
+    if not house:
+        return jsonify({"message": "找不到該房源"}), 404
+
+    data = request.get_json() or {}
     renter_id = data.get('renter_id')
     score = data.get('score')
-    comment = data.get('comment')
-    
+    comment = (data.get('comment') or '').strip()
+
     if not renter_id or score is None:
         return jsonify({"message": "請提供完整的評分與房客身分資訊"}), 400
-        
-    # 驗證複合主鍵限制：同一個房客對同一間房只能評論一次
-    existing = HouseFeedback.query.filter_by(house_id=house_id, renter_id=renter_id).first()
+
+    try:
+        score = int(score)
+    except (TypeError, ValueError):
+        return jsonify({"message": "評分格式不正確"}), 400
+
+    if score < 1 or score > 5:
+        return jsonify({"message": "評分必須介於 1 到 5 分之間"}), 400
+
+    renter = User.query.get(int(renter_id))
+    if not renter:
+        return jsonify({"message": "找不到該房客"}), 404
+
+    if not _is_renter(renter):
+        return jsonify({"message": "只有房客身分可以發表評論"}), 403
+
+    if renter.user_id == house.landlord_id:
+        return jsonify({"message": "房東無法評論自己的房源"}), 403
+
+    existing = HouseFeedback.query.filter_by(
+        house_id=house_id, renter_id=renter_id
+    ).first()
     if existing:
         return jsonify({"message": "您已經針對此房源發表過評論囉！"}), 400
-        
-    # 建立新評論
+
     new_fb = HouseFeedback(
         house_id=house_id,
         renter_id=renter_id,
-        score=int(score),
-        comment=comment
+        score=score,
+        comment=comment or None,
     )
     db.session.add(new_fb)
     db.session.commit()
-    
-    # 🎯 動態反饋：重新計算該房東旗下所有房源的平均星等並更新至 users 欄位
-    house = House.query.get(house_id)
-    if house:
-        landlord = User.query.get(house.landlord_id)
-        if landlord:
-            # 取得該房東擁有的所有房屋 ID 清單
-            landlord_house_ids = [h.house_id for h in House.query.filter_by(landlord_id=landlord.user_id).all()]
-            # 撈出對應的所有評價
-            all_feedbacks = HouseFeedback.query.filter(HouseFeedback.house_id.in_(landlord_house_ids)).all()
-            if all_feedbacks:
-                avg_score = sum([f.score for f in all_feedbacks]) / len(all_feedbacks)
-                landlord.rating = round(avg_score, 1) # 四捨五入至小數點第一位
-                db.session.commit()
 
-    return jsonify({"message": "評論提交成功，已更新房東滿意度星等！"}), 201
+    house_avg, review_count = _get_house_feedback_stats(house_id)
+    landlord_rating = _update_landlord_rating(house.landlord_id)
 
-# ［3-4. 房屋評論：讀取特定房屋的評論清單 (GET)］
+    return jsonify({
+        "message": "評論提交成功，已更新房東滿意度星等！",
+        "house_avg_score": house_avg,
+        "review_count": review_count,
+        "landlord_rating": landlord_rating,
+    }), 201
+
+
+# ［3-5. 房屋評論：讀取特定房屋的評論清單 (GET)］
 @app.route('/api/houses/<int:house_id>/feedbacks', methods=['GET'])
 def get_house_feedbacks_api(house_id):
-    feedbacks = HouseFeedback.query.filter_by(house_id=house_id).all()
+    house = House.query.get(house_id)
+    if not house:
+        return jsonify({"message": "找不到該房源"}), 404
+
+    feedbacks = HouseFeedback.query.filter_by(house_id=house_id).order_by(
+        HouseFeedback.time.desc()
+    ).all()
+
     results = []
-    for f in feedbacks:
-        user = User.query.get(f.renter_id)
+    for feedback in feedbacks:
+        renter = User.query.get(feedback.renter_id)
         results.append({
-            "renter_name": user.name if user else "匿名租客",
-            "score": f.score,
-            "comment": f.comment,
-            "time": f.time
+            "renter_name": renter.name if renter else "匿名租客",
+            "score": feedback.score,
+            "comment": feedback.comment,
+            "time": feedback.time,
         })
-    return jsonify(results), 200
+
+    avg_score, review_count = _get_house_feedback_stats(house_id)
+    landlord = User.query.get(house.landlord_id)
+
+    return jsonify({
+        "house_id": house_id,
+        "avg_score": avg_score,
+        "review_count": review_count,
+        "landlord_rating": landlord.rating if landlord else 0.0,
+        "feedbacks": results,
+    }), 200
 
 
 # ==============================================================================
 # 四、租客需求媒合核心 API (基本框架與加權演算法架構)
 # ==============================================================================
-from models import RenterPreference, HousePreference
 
 # ［4-1. 租客需求儲存：建立或更新租客的租屋偏好 (POST)］
 @app.route('/api/preferences', methods=['POST'])
 def save_renter_preference_api():
-    data = request.get_json()
+    data = request.get_json() or {}
     renter_id = data.get('renter_id')
     room_type = data.get('room_type')
     min_budget = data.get('min_budget')
     max_budget = data.get('max_budget')
-    
+    preferred_area = (data.get('preferred_area') or '').strip()
+
     if not renter_id:
         return jsonify({"message": "缺少租客帳號識別資訊"}), 400
-        
-    # 查看是否已建立過偏好框架
+
+    renter = User.query.get(int(renter_id))
+    if not renter:
+        return jsonify({"message": "找不到該房客"}), 404
+
+    if not _is_renter(renter):
+        return jsonify({"message": "只有房客身分可以設定租屋偏好"}), 403
+
+    try:
+        min_budget = int(min_budget) if min_budget not in (None, '') else 0
+        max_budget = int(max_budget) if max_budget not in (None, '') else 999999
+    except (TypeError, ValueError):
+        return jsonify({"message": "預算格式不正確"}), 400
+
+    if min_budget < 0 or max_budget < 0:
+        return jsonify({"message": "預算不可為負數"}), 400
+
+    if min_budget > max_budget:
+        return jsonify({"message": "最低預算不可大於最高預算"}), 400
+
     pref = RenterPreference.query.filter_by(renter_id=renter_id).first()
-    
+
     if not pref:
-        # 先行建立底層的基礎 HousePreference 關聯對象
         hp = HousePreference(lease_term="一年", gender="不限", smoke=False, pet=False)
         db.session.add(hp)
-        db.session.commit()
-        
+        db.session.flush()
+
         pref = RenterPreference(renter_id=renter_id, hp_id=hp.hp_id)
         db.session.add(pref)
-        
-    # 更新欄位資料
-    pref.room_type = room_type if room_type else "獨立套房"
-    pref.min_budget = int(min_budget) if min_budget else 0
-    pref.max_budget = int(max_budget) if max_budget else 999999
-    
-    db.session.commit()
-    return jsonify({"message": "個人化租屋偏好需求已儲存成功！"}), 200
 
-# ［4-2. 智慧媒合演算法：根據偏好權重篩選推薦房源 (GET)］
-@app.route('/api/match/<int:renter_id>', methods=['GET'])
-def match_houses_api(renter_id):
+    pref.room_type = room_type or "獨立套房"
+    pref.min_budget = min_budget
+    pref.max_budget = max_budget
+    pref.preferred_area = preferred_area or None
+
+    db.session.commit()
+    return jsonify({
+        "message": "個人化租屋偏好需求已儲存成功！",
+        "preference": _serialize_preference(pref),
+    }), 200
+
+
+# ［4-2. 租客需求讀取 (GET)］
+@app.route('/api/preferences/<int:renter_id>', methods=['GET'])
+def get_renter_preference_api(renter_id):
+    renter = User.query.get(renter_id)
+    if not renter:
+        return jsonify({"message": "找不到該房客"}), 404
+
     pref = RenterPreference.query.filter_by(renter_id=renter_id).first()
     if not pref:
-        return jsonify({"message": "請先至需求媒合頁面設定並儲存您的租屋偏好條件"}), 404
-        
-    # 智慧型條件評分演算法框架 (基於 100 分制倒扣邏輯)
+        return jsonify({"message": "尚未設定租屋偏好"}), 404
+
+    return jsonify(_serialize_preference(pref)), 200
+
+
+# ［4-3. 智慧媒合演算法：根據偏好權重篩選推薦房源 (GET)］
+@app.route('/api/match/<int:renter_id>', methods=['GET'])
+def match_houses_api(renter_id):
+    renter = User.query.get(renter_id)
+    if not renter:
+        return jsonify({"message": "找不到該房客"}), 404
+
+    pref = RenterPreference.query.filter_by(renter_id=renter_id).first()
+    if not pref:
+        return jsonify({
+            "message": "請先至需求媒合頁面設定並儲存您的租屋偏好條件"
+        }), 404
+
     all_houses = House.query.filter_by(visibility=True).all()
     matched_list = []
-    
-    for h in all_houses:
-        match_score = 100
-        
-        # 演算法權重權衡一：最高預算限制 (權重占比高：扣 40 分)
-        if pref.max_budget and h.price > pref.max_budget:
-            match_score -= 40
-        # 最低預算調整 (輕微扣分項目：扣 10 分)
-        elif pref.min_budget and h.price < pref.min_budget:
-            match_score -= 10
-            
-        # 演算法權重權衡二：房型比對 (偏好吻合度：扣 30 分)
-        if pref.room_type and pref.room_type != h.type:
-            match_score -= 30
-            
-        # 媒合最低錄取門檻：高於 50 分者才推薦給前端
-        if match_score >= 50:
-            matched_list.append({
-                "id": h.house_id,
-                "landlord_id": h.landlord_id,
-                "location": h.location,
-                "price": h.price,
-                "size": h.size,
-                "type": h.type,
-                "equipment": h.equipment,
-                "match_score": match_score # 前端用來顯示進度條或百分比
-            })
-            
-    # 根據媒合分數高低由上至下進行高分排序
-    matched_list = sorted(matched_list, key=lambda x: x['match_score'], reverse=True)
-    return jsonify(matched_list), 200
+
+    for house in all_houses:
+        match_score, breakdown = _calc_match_score(house, pref)
+        if match_score < MATCH_THRESHOLD:
+            continue
+
+        avg_score, review_count = _get_house_feedback_stats(house.house_id)
+        matched_list.append(_serialize_house(
+            house,
+            match_score=match_score,
+            match_breakdown=breakdown,
+            avg_score=avg_score,
+            review_count=review_count,
+        ))
+
+    matched_list.sort(key=lambda item: item['match_score'], reverse=True)
+
+    return jsonify({
+        "renter_id": renter_id,
+        "threshold": MATCH_THRESHOLD,
+        "weights": MATCH_WEIGHTS,
+        "total_candidates": len(all_houses),
+        "matched_count": len(matched_list),
+        "results": matched_list,
+    }), 200
 
 if __name__ == '__main__':
     with app.app_context():
-        db.create_all()
-        
+        _ensure_schema()
+
     app.run(debug=True)

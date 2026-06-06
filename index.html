@@ -328,6 +328,7 @@ body{
 
 /* ===================== FORM ===================== */
 
+
 .form-control,
 .form-select{
     border-radius:16px;
@@ -339,6 +340,20 @@ body{
 .form-select:focus{
     border-color:var(--primary);
     box-shadow:none;
+}
+
+/* ===================== TABS ===================== */
+.nav-tabs .nav-link {
+    color: #6b7280;
+    transition: 0.3s;
+}
+.nav-tabs .nav-link.active {
+    color: var(--primary) !important;
+    background-color: white !important;
+    border-bottom: 3px solid var(--primary) !important;
+}
+.nav-tabs .nav-link:hover {
+    color: var(--primary);
 }
 
 /* ===================== HOUSE CARD ===================== */
@@ -896,6 +911,32 @@ body{
 
     </div>
 
+    <div class="mb-3">
+        <label class="form-label fw-bold">聯絡電話 <span class="text-danger">*</span></label>
+        <input type="tel" id="reg-phone" class="form-control" placeholder="例如：0912345678">
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-6">
+            <label class="form-label fw-bold">年齡</label>
+            <input type="number" id="reg-age" class="form-control" min="18" max="100" placeholder="選填">
+        </div>
+        <div class="col-6">
+            <label class="form-label fw-bold">性別</label>
+            <select id="reg-gender" class="form-select">
+                <option value="">請選擇</option>
+                <option value="男">男</option>
+                <option value="女">女</option>
+                <option value="其他">其他</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="mb-4">
+        <label class="form-label fw-bold">職業 / 身分</label>
+        <input type="text" id="reg-job" class="form-control" placeholder="例如：學生、工程師（選填）">
+    </div>
+
     <div class="mb-4">
 
         <label class="form-label fw-bold">
@@ -932,64 +973,82 @@ body{
 <!-- ===================== SEARCH ===================== -->
 
 <div id="page-search" class="page py-5">
+    <div class="row">
+        
+        <div class="col-lg-4 mb-4">
+            <div class="card-modern p-0 overflow-hidden">
+                
+                <ul class="nav nav-tabs nav-fill border-0 bg-light" id="searchTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active fw-bold py-3 border-0 rounded-0" id="tab-general" data-bs-toggle="tab" data-bs-target="#pane-general" type="button" role="tab">
+                            🔍 一般搜尋
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link fw-bold py-3 border-0 rounded-0" id="tab-match" data-bs-toggle="tab" data-bs-target="#pane-match" type="button" role="tab" onclick="loadSavedPreferences()">
+                            ✨ 智慧媒合
+                        </button>
+                    </li>
+                </ul>
 
-<div class="row">
+                <div class="tab-content p-4" id="searchTabsContent">
+                    
+                    <div class="tab-pane fade show active" id="pane-general" role="tabpanel">
+                        <h5 class="fw-bold mb-3">探索房源</h5>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">地區</label>
+                            <input type="text" id="search-loc" class="form-control" placeholder="例如：高雄">
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">最高租金</label>
+                            <input type="number" id="search-price" class="form-control" placeholder="例如：12000">
+                        </div>
+                        <button class="btn-modern w-100" onclick="renderSearch()">開始搜尋</button>
+                    </div>
 
-<div class="col-lg-4 mb-4">
+                    <div class="tab-pane fade" id="pane-match" role="tabpanel">
+                        <h5 class="fw-bold mb-3">設定您的租屋需求</h5>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">期望房型</label>
+                            <select id="match-room-type" class="form-select">
+                                <option value="獨立套房">獨立套房</option>
+                                <option value="分租套房">分租套房</option>
+                                <option value="雅房">雅房</option>
+                                <option value="整層住家">整層住家</option>
+                            </select>
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label fw-bold">最低預算</label>
+                                <input type="number" id="match-min-budget" class="form-control" value="5000">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label fw-bold">最高預算</label>
+                                <input type="number" id="match-max-budget" class="form-control" value="15000">
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">期望地區 (選填)</label>
+                            <input type="text" id="match-preferred-area" class="form-control" placeholder="例如：鼓山區">
+                        </div>
+                        
+                        <button class="btn btn-outline-primary w-100 mb-2" style="border-radius:18px; padding:12px; font-weight: bold;" onclick="savePreference()">儲存需求設定</button>
+                        <button class="btn-modern w-100" onclick="runMatching()">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> 執行智慧媒合
+                        </button>
+                    </div>
 
-<div class="card-modern">
+                </div>
+            </div>
+        </div>
 
-    <h3 class="fw-bold mb-4">
-        搜尋房源
-    </h3>
-
-    <div class="mb-3">
-
-        <label class="form-label fw-bold">
-            地區
-        </label>
-
-        <input type="text"
-            id="search-loc"
-            class="form-control"
-            placeholder="例如：高雄">
-
+        <div class="col-lg-8">
+            <div class="row g-4" id="search-results"></div>
+            
+            <div class="row g-4" id="match-results" style="display: none;"></div>
+        </div>
+        
     </div>
-
-    <div class="mb-4">
-
-        <label class="form-label fw-bold">
-            最高租金
-        </label>
-
-        <input type="number"
-            id="search-price"
-            class="form-control"
-            placeholder="例如：12000">
-
-    </div>
-
-    <button class="btn-modern w-100"
-        onclick="renderSearch()">
-
-        開始搜尋
-    </button>
-
-</div>
-
-</div>
-
-<div class="col-lg-8">
-
-<div class="row g-4"
-    id="search-results">
-
-</div>
-
-</div>
-
-</div>
-
 </div>
 
 <!-- ===================== DETAIL ===================== -->
@@ -1011,10 +1070,6 @@ body{
         <h2 class="fw-bold mb-1">
             我的收藏
         </h2>
-
-        <a class="nav-link" id="nav-match" onclick="showPage('match')">
-            需求媒合
-        </a>
 
         <div class="text-muted">
             快速查看你喜歡的房源
@@ -1131,48 +1186,7 @@ body{
             發布房源
         </button>
 
-        </div> </div> </div> </div> <div id="page-match" class="page py-5">
-            <div class="row">
-                <div class="col-lg-5 mb-4">
-                    <div class="card-modern">
-                        <h3 class="fw-bold mb-4">🎯 設定您的租屋需求</h3>
-                        
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">期望房型</label>
-                            <select id="match-room-type" class="form-select">
-                                <option value="獨立套房">獨立套房</option>
-                                <option value="分租套房">分租套房</option>
-                                <option value="雅房">雅房</option>
-                                <option value="整層住家">整層住家</option>
-                            </select>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">最低預算 (NT$)</label>
-                            <input type="number" id="match-min-budget" class="form-control" value="5000">
-                        </div>
-                        
-                        <div class="mb-4">
-                            <label class="form-label fw-bold">最高預算 (NT$)</label>
-                            <input type="number" id="match-max-budget" class="form-control" value="15000">
-                        </div>
-                        
-                        <button class="btn-modern w-100 mb-2" onclick="savePreference()">儲存需求設定</button>
-                        <button class="btn btn-outline-primary w-100" style="border-radius:18px; padding:14px;" onclick="runMatching()">
-                            <i class="fa-solid fa-wand-magic-sparkles"></i> 執行智慧媒合
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="col-lg-7">
-                    <h3 class="fw-bold mb-4">✨ 專屬您的推薦房源</h3>
-                    <div class="row g-4" id="match-results">
-                        <div class="col-12 text-center text-muted py-5">
-                            <h4>請先設定左側條件並點擊「執行智慧媒合」</h4>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        </div> </div> </div> </div> 
         </div>
 
 
@@ -1279,6 +1293,10 @@ function showPage(pageId){
     if(pageId === 'favorite'){
         renderFavorites();
     }
+
+    if(pageId === 'match' && currentUser){
+        loadSavedPreferences();
+    }
 }
 
 /* REGISTER */
@@ -1287,8 +1305,12 @@ async function register(){
     const name = document.getElementById('reg-name').value;
     const email = document.getElementById('reg-email').value;
     const password = document.getElementById('reg-password').value;
+    const phone = document.getElementById('reg-phone').value;
     const role = document.getElementById('reg-role').value;
-    const phone = "0900123456"; // 預設一個空電話
+
+    const age = document.getElementById('reg-age').value;
+    const gender = document.getElementById('reg-gender').value;
+    const job = document.getElementById('reg-job').value;
 
     if(!name || !email || !password){
         alert("請完整填寫資料");
@@ -1307,7 +1329,10 @@ async function register(){
                 email: email,
                 password: password,
                 phone: phone,
-                role: role
+                role: role,
+                age: age ? parseInt(age) : null, // 若有填寫則轉為數字，否則傳 null
+                gender: gender || null,          // 若無選擇則傳 null
+                job: job || null                 // 若有填寫則傳送，否則傳 null
             })
         });
 
@@ -1336,7 +1361,8 @@ document.addEventListener("DOMContentLoaded", function() {
         console.log("【Session 保持成功】目前登入者為:", currentUser.name);
     }
     // 💡 確保不論有無登入，網頁一開起來就刷新一次導覽列狀態
-    updateNavbarStatus(); 
+    updateNavbarStatus();
+    syncFavoriteIds();
 });
 
 // 2. 登入函式保持不變，但在 response.ok 成功時必須觸發刷新 UI
@@ -1363,6 +1389,7 @@ async function login() {
             
             currentUser = result.user;
             localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            await syncFavoriteIds();
             
             // 💡 關鍵：登入成功後，立刻叫導覽列重新整理、把登入註冊藏起來
             updateNavbarStatus();
@@ -1411,6 +1438,9 @@ function logout() {
 }
 /* SEARCH */
 async function renderSearch() {
+    document.getElementById('search-results').style.display = 'flex';
+    document.getElementById('match-results').style.display = 'none';
+
     const loc = document.getElementById('search-loc') ? document.getElementById('search-loc').value : '';
     const price = document.getElementById('search-price') ? document.getElementById('search-price').value : '';
 
@@ -1842,6 +1872,21 @@ async function deleteHouse(id) {
    ============================================================================== */
 
 // A. 切換收藏狀態 (POST)
+async function syncFavoriteIds() {
+    if (!currentUser) {
+        favorites = [];
+        return;
+    }
+    try {
+        const response = await fetch(`http://127.0.0.1:5000/api/favorites/${currentUser.user_id}/ids`);
+        if (!response.ok) return;
+        const data = await response.json();
+        favorites = data.house_ids || [];
+    } catch (error) {
+        console.error("同步收藏狀態失敗:", error);
+    }
+}
+
 async function toggleFavorite(id) {
     if (!currentUser) {
         alert("請先登入帳號再執行收藏動作");
@@ -1855,8 +1900,13 @@ async function toggleFavorite(id) {
             body: JSON.stringify({ user_id: currentUser.user_id, house_id: id })
         });
         const result = await response.json();
+        if (!response.ok) {
+            alert(result.message);
+            return;
+        }
+        await syncFavoriteIds();
         alert(result.message);
-        renderSearch(); // 刷新頁面，變更愛心高亮樣式
+        renderSearch();
     } catch (error) {
         alert("無法連線到收藏伺服器");
     }
@@ -1903,7 +1953,11 @@ async function showDetail(id) {
 
     try {
         const response = await fetch(`http://127.0.0.1:5000/api/houses/${id}/feedbacks`);
-        const feedbacks = await response.json();
+        const feedbackData = await response.json();
+        const feedbacks = feedbackData.feedbacks || feedbackData;
+        const avgScore = feedbackData.avg_score || 0;
+        const reviewCount = feedbackData.review_count ?? feedbacks.length;
+        const landlordRating = feedbackData.landlord_rating || 0;
 
         // 建立撰寫心得表單 (僅限房客角色填寫)
         let feedbackFormHtml = '';
@@ -1943,11 +1997,11 @@ async function showDetail(id) {
                 <div class="row g-3 mb-4">
                     <div class="col-md-4"><div class="meta-pill text-center py-3">🏠 ${house.type || '未知型態'}</div></div>
                     <div class="col-md-4"><div class="meta-pill text-center py-3">📐 ${house.size || '不限'} 坪</div></div>
-                    <div class="col-md-4"><div class="meta-pill text-center py-3">⭐ 認證優質房源</div></div>
+                    <div class="col-md-4"><div class="meta-pill text-center py-3">⭐ 房源 ${avgScore || '尚無'} 分｜房東 ${landlordRating || '尚無'} 星</div></div>
                 </div>
                 <h4 class="fw-bold mb-3">內部配置與設備</h4>
                 <p class="mb-5 text-muted">${house.equipment || '基本傢俱配置'}</p>
-                <h4 class="fw-bold mb-4">真實住客評論區 (${feedbacks.length})</h4>
+                <h4 class="fw-bold mb-4">真實住客評論區 (${reviewCount})</h4>
                 <div class="feedback-container">
                     ${feedbacks.length === 0 ? '<p class="text-muted py-3">目前該房源尚無任何評論歷史紀錄。</p>' : 
                         feedbacks.map(f => `
@@ -1982,8 +2036,12 @@ async function submitFeedback(id) {
             body: JSON.stringify({ renter_id: currentUser.user_id, score: score, comment: comment })
         });
         const result = await response.json();
+        if (!response.ok) {
+            alert(result.message);
+            return;
+        }
         alert(result.message);
-        showDetail(id); // 送出後立即重刷
+        showDetail(id);
     } catch (error) {
         alert("提交評論時發生非預期錯誤");
     }
@@ -1994,11 +2052,34 @@ async function submitFeedback(id) {
    四、租客需求媒合：動態串接區 (新增區塊)
    ============================================================================== */
 
-// A. 儲存偏好數據框架到後端 (POST)
+// A. 讀取已儲存的偏好設定 (GET)
+async function loadSavedPreferences() {
+    if (!currentUser) return;
+    try {
+        const response = await fetch(`http://127.0.0.1:5000/api/preferences/${currentUser.user_id}`);
+        if (!response.ok) return;
+        const pref = await response.json();
+        document.getElementById('match-room-type').value = pref.room_type || '獨立套房';
+        document.getElementById('match-min-budget').value = pref.min_budget ?? 5000;
+        document.getElementById('match-max-budget').value = pref.max_budget ?? 15000;
+        document.getElementById('match-preferred-area').value = pref.preferred_area || '';
+    } catch (error) {
+        console.error("載入偏好設定失敗:", error);
+    }
+}
+
+// B. 儲存偏好數據框架到後端 (POST)
 async function savePreference() {
+    if (!currentUser) {
+        alert("請先登入帳號");
+        showPage('login');
+        return;
+    }
+
     const type = document.getElementById('match-room-type').value;
     const minBudget = document.getElementById('match-min-budget').value;
     const maxBudget = document.getElementById('match-max-budget').value;
+    const preferredArea = document.getElementById('match-preferred-area').value;
 
     try {
         const response = await fetch('http://127.0.0.1:5000/api/preferences', {
@@ -2008,18 +2089,32 @@ async function savePreference() {
                 renter_id: currentUser.user_id,
                 room_type: type,
                 min_budget: minBudget,
-                max_budget: maxBudget
+                max_budget: maxBudget,
+                preferred_area: preferredArea
             })
         });
         const result = await response.json();
+        if (!response.ok) {
+            alert(result.message || "儲存需求設定失敗");
+            return;
+        }
         alert(result.message);
     } catch (error) {
-        alert("儲存需求設定失敗");
+        console.error("儲存需求設定失敗:", error);
+        alert("無法連線到後端伺服器，請確認 Flask 是否已啟動");
     }
 }
 
-// B. 呼叫後端智慧演算法，加權計算並顯示媒合比例 (GET)
+// C. 呼叫後端智慧演算法，加權計算並顯示媒合比例 (GET)
 async function runMatching() {
+    if (!currentUser) {
+        alert("請先登入帳號");
+        showPage('login');
+        return;
+    }
+
+    document.getElementById('search-results').style.display = 'none';
+    document.getElementById('match-results').style.display = 'flex';
     try {
         const response = await fetch(`http://127.0.0.1:5000/api/match/${currentUser.user_id}`);
         if (!response.ok) {
@@ -2027,25 +2122,29 @@ async function runMatching() {
             alert(err.message);
             return;
         }
-        const matchedHouses = await response.json();
+        const matchData = await response.json();
+        const matchedHouses = matchData.results || matchData;
         const container = document.getElementById('match-results');
         if (!container) return;
 
         if (matchedHouses.length === 0) {
-            container.innerHTML = `<div class="col-12 text-center text-muted py-5"><h4>😔 很抱歉，目前系統內無任何大於 50% 的推薦物件</h4></div>`;
+            container.innerHTML = `<div class="col-12 text-center text-muted py-5"><h4>😔 很抱歉，目前系統內無任何達到 ${matchData.threshold || 50} 分的推薦物件</h4></div>`;
             return;
         }
 
-        // 把當前跑出的結果塞入快取，讓「細看此房」可以直接抓到正確的快取屬性
         window.currentLoadedHouses = matchedHouses;
 
-        container.innerHTML = matchedHouses.map(h => `
+        container.innerHTML = matchedHouses.map(h => {
+            const breakdown = h.match_breakdown || {};
+            const reasons = Object.values(breakdown).map(item => item.reason).filter(Boolean).join('｜');
+            return `
             <div class="col-md-12">
                 <div class="card-modern d-flex justify-content-between align-items-center p-4">
                     <div>
                         <span class="badge bg-success mb-2">🔥 智慧媒合指數：${h.match_score} 分</span>
                         <h4 class="fw-bold m-0">${h.location}</h4>
-                        <div class="text-muted mt-1">${h.type} ｜ 📐 ${h.size} 坪</div>
+                        <div class="text-muted mt-1">${h.type} ｜ 📐 ${h.size} 坪 ｜ ⭐ ${h.avg_score || 0} 分 (${h.review_count || 0} 則評論)</div>
+                        <small class="text-secondary">${reasons}</small>
                     </div>
                     <div class="text-end">
                         <h4 class="text-danger fw-bold mb-2">NT$ ${h.price} / 月</h4>
@@ -2055,7 +2154,7 @@ async function runMatching() {
                     </div>
                 </div>
             </div>
-        `).join('');
+        `}).join('');
     } catch (error) {
         alert("演算法媒合運作錯誤");
     }
