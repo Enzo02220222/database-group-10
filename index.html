@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
-<title>RentHouse｜全台大學生安心租屋平台</title>
+<title>RentHouse｜租屋平台</title>
 
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
@@ -12,24 +12,18 @@
 <style>
 
 :root{
-    --primary:#98aacc;       
-    --primary-light:#EEF1EC;
-
-    --secondary:#A89F91;   
-
-    --dark:#4E5552;
-    --gray:#7C8380;
-
-    --light:#F7F6F3;
-    --white:#FFFFFF;
-
-    --border:#D8D7D2;
-
-    --success:#7FAF8A;
-    --danger:#C4877B;
-
+    --primary:#5b67f1;
+    --primary-light:#eef2ff;
+    --secondary:#8b5cf6;
+    --dark:#111827;
+    --gray:#6b7280;
+    --light:#f8fafc;
+    --white:#ffffff;
+    --border:#e5e7eb;
+    --success:#10b981;
+    --danger:#ef4444;
     --shadow:
-    0 10px 30px rgba(0,0,0,.06);
+        0 10px 40px rgba(15,23,42,0.08);
 }
 
 *{
@@ -203,7 +197,7 @@ body{
         0 10px 25px rgba(15,23,42,0.06);
 }
 
-.hero-search input, .hero-search select{
+.hero-search input{
     border:none!important;
     box-shadow:none!important;
     background:#f8fafc;
@@ -429,15 +423,6 @@ body{
     color:#4b5563;
 }
 
-.tag-pill {
-    background: #eef2ff;
-    color: #4f46e5;
-    padding: 4px 10px;
-    border-radius: 8px;
-    font-size: 0.78rem;
-    font-weight: 700;
-}
-
 .favorite-btn{
     border:none;
     width:46px;
@@ -566,7 +551,7 @@ body{
             <i class="fa-solid fa-house"></i>
         </div>
 
-        RentHouse <span style="font-size: 0.9rem; margin-left: 5px; font-weight: normal; color: var(--gray);">| 全台大專院校租屋雷達</span>
+        RentHouse
 
     </div>
 
@@ -618,46 +603,41 @@ body{
 <div class="col-lg-6">
 
     <div class="hero-badge mb-4">
-        <i class="fa-solid fa-graduation-cap"></i>
-        全台 130+ 所大專院校週邊房源
+        <i class="fa-solid fa-location-dot"></i>
+        找到適合自己的理想空間
     </div>
 
     <h1 class="hero-title mb-4">
-        找學校附近的房源<br>
-        <span>一鍵精準鎖定</span>
+        找到讓你<br>
+        <span>真正想回家的地方</span>
     </h1>
 
     <p class="hero-desc">
-        專為大學生設計！免去繁瑣的計算，直接選定就讀學校，進階篩選房東與學長姐真實生活評價，找外宿不再踩雷。
+        用更舒服、更直覺的方式探索租屋空間，
+        從學生套房到家庭住宅，
+        讓每一次找房都變得輕鬆簡單。
     </p>
 
-    <!-- 首頁搜尋列（雙下拉選單：先選縣市、再選大學） -->
     <div class="hero-search">
 
-        <div class="row g-2 align-items-center">
+        <div class="row g-3 align-items-center">
 
-            <div class="col-md-3">
-                <select id="index-search-county" class="form-select" onchange="updateUnivDropdown('index-search-county', 'index-search-univ')">
-                    <option value="">選擇縣市</option>
-                </select>
+            <div class="col-md-5">
+                <input type="text"
+                    class="form-control"
+                    placeholder="搜尋地區">
             </div>
 
             <div class="col-md-4">
-                <select id="index-search-univ" class="form-select">
-                    <option value="">請先選擇縣市</option>
-                </select>
-            </div>
-
-            <div class="col-md-3">
                 <input type="number"
-                    id="index-search-price"
                     class="form-control"
                     placeholder="預算上限">
             </div>
 
-            <div class="col-md-2">
-                <button class="btn-modern w-100 px-0"
-                    onclick="triggerIndexSearch()">
+            <div class="col-md-3">
+                <button class="btn-modern w-100"
+                    onclick="showPage('search')">
+
                     搜尋
                 </button>
             </div>
@@ -675,11 +655,11 @@ body{
                 <div class="stat-box">
 
                     <div class="stat-number">
-                        130+
+                        2K+
                     </div>
 
                     <small>
-                        收錄大專院校
+                        精選房源
                     </small>
 
                 </div>
@@ -707,11 +687,11 @@ body{
                 <div class="stat-box">
 
                     <div class="stat-number">
-                        台電計費
+                        24H
                     </div>
 
                     <small>
-                        智慧過濾
+                        即時更新
                     </small>
 
                 </div>
@@ -757,15 +737,16 @@ body{
     <div class="card-modern feature-card">
 
         <div class="feature-icon">
-            <i class="fa-solid fa-graduation-cap"></i>
+            <i class="fa-solid fa-house"></i>
         </div>
 
         <h4 class="fw-bold mb-3">
-            全台大學地圖全收錄
+            清楚好懂的房源資訊
         </h4>
 
         <p class="text-muted">
-            不論是頂大還是技職校院，全台灣每一所大學的週邊學區房源，都能在此輕鬆一鍵篩選。
+            一眼查看價格、坪數與設備，
+            不再浪費時間反覆確認。
         </p>
 
     </div>
@@ -777,15 +758,16 @@ body{
     <div class="card-modern feature-card">
 
         <div class="feature-icon">
-            <i class="fa-solid fa-tags"></i>
+            <i class="fa-solid fa-heart"></i>
         </div>
 
         <h4 class="fw-bold mb-3">
-            進階篩選特點
+            收藏與比較功能
         </h4>
 
         <p class="text-muted">
-            獨立洗脫烘、台電帳單、可養寵物、機車好停。大學生最在意的隱形條件一鍵勾選。
+            收藏喜歡的房源，
+            快速比較最適合自己的空間。
         </p>
 
     </div>
@@ -801,11 +783,12 @@ body{
         </div>
 
         <h4 class="fw-bold mb-3">
-            學長姐真實生活開箱
+            真實租客回饋
         </h4>
 
         <p class="text-muted">
-            最真實的評分機制，採光、隔音、甚至房東阿姨親不親切，看上一屆怎麼說。
+            查看其他租客的實際生活心得，
+            降低踩雷風險。
         </p>
 
     </div>
@@ -964,7 +947,7 @@ body{
             class="form-select">
 
             <option value="tenant">
-                房客 (學生)
+                房客
             </option>
 
             <option value="landlord">
@@ -1118,7 +1101,7 @@ body{
 </h2>
 
 <p class="text-center text-muted mb-5">
-    提供清楚完整的資訊，快速精準接觸理想的校園學生
+    提供清楚完整的資訊，提升曝光效果
 </p>
 
 <div class="row g-3">
@@ -1126,39 +1109,19 @@ body{
 <div class="col-md-6">
 
 <label class="form-label fw-bold">
-    完整地點
+    地點
 </label>
 
 <input type="text"
     id="add-loc"
-    class="form-control" placeholder="如：高雄市鼓山區蓮海路70號">
+    class="form-control">
 
 </div>
 
 <div class="col-md-6">
 
 <label class="form-label fw-bold">
-    鄰近大專院校 (二階選單)
-</label>
-<div class="row g-2">
-    <div class="col-6">
-        <select id="add-county" class="form-select" onchange="updateUnivDropdown('add-county', 'add-univ')">
-            <option value="">選擇縣市</option>
-        </select>
-    </div>
-    <div class="col-6">
-        <select id="add-univ" class="form-select">
-            <option value="">請先選縣市</option>
-        </select>
-    </div>
-</div>
-
-</div>
-
-<div class="col-md-6">
-
-<label class="form-label fw-bold">
-    租金 (月)
+    租金
 </label>
 
 <input type="number"
@@ -1175,7 +1138,7 @@ body{
 
 <input type="text"
     id="add-size"
-    class="form-control" placeholder="例如：7坪">
+    class="form-control">
 
 </div>
 
@@ -1187,31 +1150,19 @@ body{
 
 <input type="text"
     id="add-type"
-    class="form-control" placeholder="例如：獨立套房">
-
-</div>
-
-<div class="col-md-6">
-
-<label class="form-label fw-bold">
-    基本設備簡述
-</label>
-
-<input type="text"
-    id="add-equip"
-    class="form-control" placeholder="例如：冷氣、衣櫃、網路">
+    class="form-control">
 
 </div>
 
 <div class="col-12">
 
 <label class="form-label fw-bold">
-    學生友善特點標籤 (用半形逗號區隔)
+    設備
 </label>
 
 <input type="text"
-    id="add-tags"
-    class="form-control" placeholder="例如：台電計費,獨立洗衣機,可養寵物">
+    id="add-equip"
+    class="form-control">
 
 </div>
 
@@ -1239,175 +1190,77 @@ body{
         </div>
 
 
-<div class="footer">
-    © 2026 RentHouse｜專為全台大專院校學生打造的完美租屋指南
+    </div> <div class="footer">
+    © 2026 RentHouse｜打造更舒服的租屋體驗
 </div>
 
 <script>
 
-/* ===================== 全台大專院校資料庫 (130+ 所完整收錄) ===================== */
-const taiwanUniversities = {
-    "台北市": [
-        "國立台灣大學", "國立台灣科技大學", "國立台灣師範大學", "國立政治大學", "國立台北科技大學", 
-        "國立台北大學(民生校區)", "國立台北教育大學", "國立台北藝術大學", "國立台灣戲曲學院", "國立台北護理健康大學",
-        "台北市立大學", "東吳大學", "輔仁大學(城區部)", "銘傳大學", "實踐大學", "大同大學", "世新大學", 
-        "中國文化大學", "台北醫學大學", "康寧大學", "中國科技大學"
-    ],
-    "新北市": [
-        "國立台北大學(三峽校區)", "輔仁大學", "淡江大學", "真理大學", "華梵大學", "亞東科技大學", "明志科技大學", 
-        "聖約翰科技大學", "景文科技大學", "東南科技大學", "醒吾科技大學", "致理科技大學", "宏國德霖科技大學", 
-        "黎明技術學院", "華夏科技大學", "馬偕醫學院"
-    ],
-    "基隆市": [
-        "國立台灣海洋大學", "崇右影藝科技大學", "經國管理學院"
-    ],
-    "桃園市": [
-        "國立中央大學", "國立體育大學", "中央警察大學", "中原大學", "元智大學", "長庚大學", "開南大學", 
-        "健行科技大學", "萬能科技大學", "龍華科技大學", "新生醫事管理專科學校", "長庚科技大學"
-    ],
-    "新竹市/縣": [
-        "國立清華大學", "國立陽明交通大學(光復校區)", "國立新竹教育大學", "中華大學", "玄奘大學", "新竹科技大學",
-        "明新科技大學", "敏實科技大學"
-    ],
-    "苗栗縣": [
-        "國立聯合大學", "育達科技大學", "仁德醫事管理專科學校"
-    ],
-    "台中市": [
-        "國立中興大學", "國立台中教育大學", "國立台灣體育運動大學", "國立台中科技大學", "逢甲大學", "東海大學", 
-        "靜宜大學", "亞洲大學", "中國醫藥大學", "中山醫學大學", "嶺東科技大學", "朝陽科技大學", "弘光科技大學", 
-        "僑光科技大學", "中臺科技大學", "修平科技大學"
-    ],
-    "彰化縣": [
-        "國立彰化師範大學", "大葉大學", "建國科技大學", "明道大學", "中州科技大學"
-    ],
-    "南投縣": [
-        "國立暨南國際大學"
-    ],
-    "雲林縣": [
-        "國立雲林科技大學", "國立虎尾科技大學", "環球科技大學"
-    ],
-    "嘉義市/縣": [
-        "國立中正大學", "國立嘉義大學", "南華大學", "吳鳳科技大學", "中信金融管理學院", "稻江科技管理學院"
-    ],
-    "台南市": [
-        "國立成功大學", "國立台南大學", "國立台南藝術大學", "長榮大學", "台灣首府大學", "南台科技大學", 
-        "崑山科技大學", "嘉南藥理大學", "台南應用科技大學", "遠東科技大學", "中華醫事科技大學", "康寧大學(台南)",
-        "中信金融管理學院"
-    ],
-    "高雄市": [
-        "國立中山大學", "國立高雄大學", "國立高雄師範大學", "國立高雄科技大學", "義守大學", "高雄醫學大學", 
-        "實踐大學(高雄校區)", "正修科技大學", "高苑科技大學", "輔英科技大學", "樹德科技大學", "東方設計大學", 
-        "和春技術學院", "育英醫事管理專科學校"
-    ],
-    "屏東縣": [
-        "國立屏東大學", "國立屏東科技大學", "美和科技大學", "慈惠醫事管理專科學校"
-    ],
-    "宜蘭縣": [
-        "國立宜蘭大學", "佛光大學", "淡江大學(蘭陽校區)", "聖母醫護管理專科學校", "蘭陽技術學院"
-    ],
-    "花蓮縣": [
-        "國立東華大學", "慈濟大學", "慈濟科技大學"
-    ],
-    "台東縣": [
-        "國立台東大學"
-    ],
-    "澎湖/金門": [
-        "國立澎湖科技大學", "國立金門大學"
-    ]
-};
-
 /* USERS */
+
 let users = [
-    { name:"測試房東", email:"landlord@test.com", password:"1234", role:"landlord" },
-    { name:"測試房客", email:"tenant@test.com", password:"1234", role:"tenant" }
+
+{
+    name:"測試房東",
+    email:"landlord@test.com",
+    password:"1234",
+    role:"landlord"
+},
+
+{
+    name:"測試房客",
+    email:"tenant@test.com",
+    password:"1234",
+    role:"tenant"
+}
+
 ];
 
 let currentUser = null;
 
-/* HOUSES - 範例資料庫（綁定完整校名） */
+/* HOUSES */
+
 let houses = [
-    {
-        id: 1,
-        location: "高雄市鼓山區哨船街",
-        nearUniversity: "國立中山大學",
-        price: 8500,
-        size: "7坪",
-        type: "獨立套房",
-        equipment: "冷氣、衣櫃、網路、個人雙人床組",
-        tags: ["台電計費", "獨立洗衣機", "有飲水機"],
-        image: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?q=80&w=1200&auto=format&fit=crop",
-        feedbacks: [{ score: 5, comment: "離學校正門出入口超近！台電帳單計費超省。" }]
-    },
-    {
-        id: 2,
-        location: "台中市西屯區文華路",
-        nearUniversity: "逢甲大學",
-        price: 12000,
-        size: "9坪",
-        type: "整層住家",
-        equipment: "洗衣機、冰箱、陽台、流理台",
-        tags: ["獨立洗衣機", "可養寵物"],
-        image: "https://images.unsplash.com/photo-1494526585095-c41746248156?q=80&w=1200&auto=format&fit=crop",
-        feedbacks: [{ score: 4, comment: "下樓就是逢甲夜市，吃宵夜太方便了。" }]
-    },
-    {
-        id: 3,
-        location: "台北市大安區羅斯福路",
-        nearUniversity: "國立台灣大學",
-        price: 14500,
-        size: "6.5坪",
-        type: "獨立套房",
-        equipment: "冷氣、床墊、書桌",
-        tags: ["台電計費", "有飲水機"],
-        image: "https://images.unsplash.com/photo-1484154218962-a197022b5858?q=80&w=1200&auto=format&fit=crop",
-        feedbacks: [{ score: 5, comment: "走去捷運公館站很快，生活機能很好。" }]
-    }
+
+{
+    id:1,
+    location:"高雄市鼓山區",
+    price:8500,
+    size:"7坪",
+    type:"獨立套房",
+    equipment:"冷氣、衣櫃、網路",
+    image:"https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?q=80&w=1200&auto=format&fit=crop",
+    feedbacks:[
+        {
+            score:5,
+            comment:"環境舒服，採光很好。"
+        }
+    ]
+},
+
+{
+    id:2,
+    location:"台中市西屯區",
+    price:12000,
+    size:"9坪",
+    type:"整層住家",
+    equipment:"洗衣機、冰箱",
+    image:"https://images.unsplash.com/photo-1494526585095-c41746248156?q=80&w=1200&auto=format&fit=crop",
+    feedbacks:[
+        {
+            score:4,
+            comment:"交通方便，附近生活機能很好。"
+        }
+    ]
+}
+
 ];
 
 let favorites = [];
 
-/* 初始化渲染所有頁面的縣市下拉選單 */
-function initUniversityDropdowns() {
-    const countySelects = ['index-search-county', 'search-county', 'add-county'];
-    
-    countySelects.forEach(selectId => {
-        const selectEl = document.getElementById(selectId);
-        if (!selectEl) return;
-        
-        // 清空除了第一題外的內容
-        selectEl.innerHTML = '<option value="">選擇縣市</option>';
-        
-        Object.keys(taiwanUniversities).forEach(county => {
-            const option = document.createElement('option');
-            option.value = county;
-            option.textContent = county;
-            selectEl.appendChild(option);
-        });
-    });
-}
+/* PAGE */
 
-/* 當縣市更動時，動態更新對應的大學選單 */
-function updateUnivDropdown(countySelectId, univSelectId) {
-    const countyVal = document.getElementById(countySelectId).value;
-    const univSelectEl = document.getElementById(univSelectId);
-    
-    if (!univSelectEl) return;
-    
-    if (!countyVal) {
-        univSelectEl.innerHTML = '<option value="">請先選擇縣市</option>';
-        return;
-    }
-    
-    univSelectEl.innerHTML = '<option value="">-- 請選擇大學 --</option>';
-    const univList = taiwanUniversities[countyVal] || [];
-    
-    univList.forEach(univ => {
-        const option = document.createElement('option');
-        option.value = univ;
-        option.textContent = univ;
-        univSelectEl.appendChild(option);
-    });
-}
+function showPage(pageId){
 
     /* 🔒 新增：前端頁面層級的權限阻擋邏輯 */
     
@@ -1430,22 +1283,15 @@ function updateUnivDropdown(countySelectId, univSelectId) {
         page.classList.remove('active-page');
     });
 
-    document.getElementById('page-' + pageId).classList.add('active-page');
+    document.getElementById('page-' + pageId)
+    .classList.add('active-page');
 
-    if(pageId === 'search') renderSearch();
-    if(pageId === 'favorite') renderFavorites();
-}
+    if(pageId === 'search'){
+        renderSearch();
+    }
 
-/* 當選擇學校後，自動幫忙帶入地區關鍵字（例如選台北市的學校，自動帶入台北） */
-function syncUnivToLocation() {
-    const countyVal = document.getElementById('search-county').value;
-    const locInput = document.getElementById('search-loc');
-    
-    // 如果使用者選了縣市，就自動幫他把縣市名稱前兩個字填入地區搜尋，優化體驗
-    if (countyVal) {
-        locInput.value = countyVal.substring(0, 2);
-    } else {
-        locInput.value = "";
+    if(pageId === 'favorite'){
+        renderFavorites();
     }
 
     if(pageId === 'match' && currentUser){
@@ -1453,26 +1299,9 @@ function syncUnivToLocation() {
     }
 }
 
-/* 首頁快捷搜尋按鈕連動 */
-function triggerIndexSearch() {
-    const county = document.getElementById('index-search-county').value;
-    const univ = document.getElementById('index-search-univ').value;
-    const price = document.getElementById('index-search-price').value;
-    
-    showPage('search');
-    
-    // 同步到搜尋頁面的元件上
-    document.getElementById('search-county').value = county;
-    updateUnivDropdown('search-county', 'search-univ');
-    document.getElementById('search-univ').value = univ;
-    document.getElementById('search-price').value = price;
-    
-    syncUnivToLocation();
-    renderSearch();
-}
-
 /* REGISTER */
 async function register(){
+
     const name = document.getElementById('reg-name').value;
     const email = document.getElementById('reg-email').value;
     const password = document.getElementById('reg-password').value;
@@ -1489,6 +1318,7 @@ async function register(){
     }
 
     try {
+        // 使用 fetch 發送 POST 請求給 Flask
         const response = await fetch('http://127.0.0.1:5000/api/register', {
             method: 'POST',
             headers: {
@@ -1505,13 +1335,16 @@ async function register(){
                 job: job || null                 // 若有填寫則傳送，否則傳 null
             })
         });
+
         const result = await response.json();
+
         if (response.ok) {
             alert(result.message);
             showPage('login');
         } else {
             alert(result.message);
         }
+
     } catch (error) {
         console.error('錯誤:', error);
         alert('無法連線到後端伺服器');
@@ -1682,77 +1515,188 @@ async function renderSearch() {
 }
 
 /* DETAIL */
+
 function showDetail(id){
-    const house = houses.find(h=>h.id===id);
-    document.getElementById('detail-content').innerHTML = `
+
+    const house =
+        houses.find(h=>h.id===id);
+
+    document.getElementById('detail-content')
+    .innerHTML = `
+
         <div class="card-modern">
-            <img src="${house.image}" class="detail-img mb-4">
-            <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+
+            <img src="${house.image}"
+                class="detail-img mb-4">
+
+            <div class="d-flex flex-wrap
+                justify-content-between
+                align-items-center mb-4">
+
                 <div>
-                    <h2 class="fw-bold mb-1">${house.location}</h2>
-                    <div class="text-primary fw-bold mb-2">
-                        <i class="fa-solid fa-graduation-cap"></i> 鄰近學校：${house.nearUniversity || '通用校園物件'}
+
+                    <h2 class="fw-bold">
+                        ${house.location}
+                    </h2>
+
+                    <div class="house-price">
+                        NT$ ${house.price} / 月
                     </div>
-                    <div class="house-price">NT$ ${house.price} / 月</div>
+
                 </div>
-                <button class="btn-modern">立即聯絡房東</button>
+
+                <button class="btn-modern">
+                    立即聯絡房東
+                </button>
+
             </div>
+
             <div class="row g-3 mb-4">
-                <div class="col-md-4"><div class="meta-pill text-center py-3">🏠 ${house.type}</div></div>
-                <div class="col-md-4"><div class="meta-pill text-center py-3">📐 ${house.size}</div></div>
-                <div class="col-md-4"><div class="meta-pill text-center py-3">⭐ 大學生熱門房源</div></div>
-            </div>
-            <h4 class="fw-bold mb-2">特色標籤</h4>
-            <div class="d-flex gap-2 flex-wrap mb-4">
-                ${house.tags ? house.tags.map(t => `<span class="tag-pill" style="font-size:0.9rem; padding: 6px 12px;">${t}</span>`).join('') : '<span class="text-muted">暫無</span>'}
-            </div>
-            <h4 class="fw-bold mb-3">設備資訊</h4>
-            <p class="mb-5">${house.equipment}</p>
-            <h4 class="fw-bold mb-3">學長姐的退租真心話</h4>
-            ${house.feedbacks.length > 0 ? house.feedbacks.map(f=>`
-                <div class="feedback-item">
-                    <div class="text-warning mb-2">${'⭐'.repeat(f.score)}</div>
-                    ${f.comment}
+
+                <div class="col-md-4">
+
+                    <div class="meta-pill text-center py-3">
+                        🏠 ${house.type}
+                    </div>
+
                 </div>
-            `).join('') : '<p class="text-muted">目前尚無評論。</p>'}
+
+                <div class="col-md-4">
+
+                    <div class="meta-pill text-center py-3">
+                        📐 ${house.size}
+                    </div>
+
+                </div>
+
+                <div class="col-md-4">
+
+                    <div class="meta-pill text-center py-3">
+                        ⭐ 高評價房源
+                    </div>
+
+                </div>
+
+            </div>
+
+            <h4 class="fw-bold mb-3">
+                設備資訊
+            </h4>
+
+            <p class="mb-5">
+                ${house.equipment}
+            </p>
+
+            <h4 class="fw-bold mb-3">
+                房客評論
+            </h4>
+
+            ${
+                house.feedbacks.map(f=>`
+
+                    <div class="feedback-item">
+
+                        <div class="text-warning mb-2">
+                            ${'⭐'.repeat(f.score)}
+                        </div>
+
+                        ${f.comment}
+
+                    </div>
+
+                `).join('')
+            }
+
         </div>
+
     `;
+
     showPage('detail');
 }
 
 /* FAVORITE */
+
 function toggleFavorite(id){
-    if(favorites.includes(id)) favorites = favorites.filter(f=>f!==id);
-    else favorites.push(id);
+
+    if(favorites.includes(id)){
+
+        favorites =
+            favorites.filter(f=>f!==id);
+
+    }else{
+
+        favorites.push(id);
+    }
+
     renderSearch();
 }
 
 function renderFavorites(){
-    const favoriteHouses = houses.filter(h=> favorites.includes(h.id));
-    const div = document.getElementById('favorite-list');
+
+    const favoriteHouses =
+        houses.filter(h=>
+            favorites.includes(h.id)
+        );
+
+    const div =
+        document.getElementById('favorite-list');
 
     if(favoriteHouses.length === 0){
+
         div.innerHTML = `
+
             <div class="col-12">
+
                 <div class="card-modern text-center">
-                    <h4 class="fw-bold mb-3">尚未收藏房源</h4>
-                    <p class="text-muted">快去探索喜歡的空間吧！</p>
+
+                    <h4 class="fw-bold mb-3">
+                        尚未收藏房源
+                    </h4>
+
+                    <p class="text-muted">
+                        快去探索喜歡的空間吧！
+                    </p>
+
                 </div>
+
             </div>
+
         `;
+
         return;
     }
+
     div.innerHTML = favoriteHouses.map(h=>`
+
         <div class="col-md-6">
+
             <div class="house-card">
-                <img src="${h.image}" class="house-img">
+
+                <img src="${h.image}"
+                    class="house-img">
+
                 <div class="house-body">
-                    <h5 class="fw-bold">${h.location}</h5>
-                    <div class="house-price mb-3">NT$ ${h.price}</div>
-                    <button class="btn-modern w-100" onclick="showDetail(${h.id})">查看詳情</button>
+
+                    <h5 class="fw-bold">
+                        ${h.location}
+                    </h5>
+
+                    <div class="house-price mb-3">
+                        NT$ ${h.price}
+                    </div>
+
+                    <button class="btn-modern w-100"
+                        onclick="showDetail(${h.id})">
+
+                        查看詳情
+                    </button>
+
                 </div>
+
             </div>
+
         </div>
+
     `).join('');
 }
 
