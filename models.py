@@ -20,6 +20,7 @@ class User(db.Model):
     job = db.Column(db.String(50))
     role = db.Column(db.String(20), nullable=False) # 'renter' or 'landlord'
     rating = db.Column(db.Float, default=0.0) # 房東專用欄位：評價星等（如果是房客，此欄位 NULL）
+    avatar = db.Column(db.String(255)) # 用戶頭像
 
     # 建立 ORM 關聯 (not entity)
     # 一個房東(User)可以擁有多個房屋(House)
@@ -44,6 +45,7 @@ class House(db.Model):
     price = db.Column(db.Integer, nullable=False)
     equipment = db.Column(db.Text) # 設備 (例如：冷氣、洗衣機、網路)
     visibility = db.Column(db.Boolean, default=True, nullable=False) # 是否可見/上架狀態
+    image = db.Column(db.String(500)) # 房屋圖片網址
 
     # 建立 ORM 關聯
     # 一個房屋可以擁有多個評價

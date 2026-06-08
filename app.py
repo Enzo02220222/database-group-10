@@ -16,23 +16,29 @@ db.init_app(app)
 
 
 def _ensure_schema():
-    """補齊舊版資料庫缺少的欄位，避免 create_all 無法自動升級既有表結構。"""
     db.create_all()
-
     inspector = inspect(db.engine)
-    if not inspector.has_table('renter_preferences'):
-        return
+    
+    # 檢查並補齊 renter_preferences 的 preferred_area
+    if inspector.has_table('renter_preferences'):
+        existing_columns = {col['name'] for col in inspector.get_columns('renter_preferences')}
+        if 'preferred_area' not in existing_columns:
+            with db.engine.begin() as connection:
+                connection.execute(text("ALTER TABLE renter_preferences ADD COLUMN preferred_area VARCHAR(50)"))
+                
+    # 檢查並補齊 users 的 avatar
+    if inspector.has_table('users'):
+        existing_columns = {col['name'] for col in inspector.get_columns('users')}
+        if 'avatar' not in existing_columns:
+            with db.engine.begin() as connection:
+                connection.execute(text("ALTER TABLE users ADD COLUMN avatar VARCHAR(255)"))
 
-    existing_columns = {
-        column['name']
-        for column in inspector.get_columns('renter_preferences')
-    }
-    if 'preferred_area' not in existing_columns:
-        with db.engine.begin() as connection:
-            connection.execute(text(
-                "ALTER TABLE renter_preferences "
-                "ADD COLUMN preferred_area VARCHAR(50)"
-            ))
+    # 檢查並補齊 houses 的 image 欄位            
+    if inspector.has_table('houses'):
+        existing_columns = {col['name'] for col in inspector.get_columns('houses')}
+        if 'image' not in existing_columns:
+            with db.engine.begin() as connection:
+                connection.execute(text("ALTER TABLE houses ADD COLUMN image VARCHAR(500)"))
 
 # ==============================================================================
 
@@ -115,6 +121,45 @@ def register():
     
     return jsonify({"message": "註冊成功！"}), 200
 
+
+@app.route('/api/users/<int:user_id>', methods=['GET', 'PUT'])
+def handle_user_profile(user_id):
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"message": "找不到該使用者"}), 404
+
+    # --- 讀取個人資料 (GET) ---
+    if request.method == 'GET':
+        return jsonify({
+            "user_id": user.user_id,
+            "name": user.name,
+            "email": user.email,
+            "phone": user.phone,
+            "age": user.age,
+            "gender": user.gender,
+            "job": user.job,
+            "role": user.role,
+            "avatar": user.avatar
+            # 注意：基於資安，不回傳 user.password
+        }), 200
+
+    # --- 更新個人資料 (PUT) ---
+    elif request.method == 'PUT':
+        data = request.get_json()
+        
+        # 逐一更新欄位，如果有傳入值才更新，沒傳則維持原樣
+        if 'password' in data and data['password'].strip():
+            user.password = data['password'] # 如果前端有輸入新密碼，才進行覆蓋
+            
+        if 'phone' in data: user.phone = data['phone']
+        if 'age' in data: user.age = int(data['age']) if data['age'] else None
+        if 'gender' in data: user.gender = data['gender']
+        if 'job' in data: user.job = data['job']
+        if 'avatar' in data: user.avatar = data['avatar']
+        
+        db.session.commit()
+        return jsonify({"message": "個人資料更新成功！"}), 200
+
 # ==============================================================================
 
 # ==============================================================================
@@ -135,6 +180,7 @@ def handle_houses_api():
         size = data.get('size')
         type_ = data.get('type')
         equipment = data.get('equipment')
+        image = (data.get('image') or '').strip()
         
         if not location or not price or not landlord_id:
             return jsonify({"message": "請填寫必要資料（地點、租金與房東ID）"}), 400
@@ -146,6 +192,7 @@ def handle_houses_api():
             size=float(size) if size else 5.0,
             type=type_ if type_ else '獨立套房',
             price=int(price),
+            image=image or None,
             equipment=equipment if equipment else '基本家具',
             visibility=True # 預設直接上架
         )
@@ -182,7 +229,7 @@ def handle_houses_api():
                 "type": h.type,
                 "equipment": h.equipment,
                 # 🎯 修正二：補上 100% 絕對存在、極高畫質的預設房屋圖片網址
-                "image": "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?q=80&w=1200&auto=format&fit=crop" 
+                "image": _house_image_url(h)
             })
         return jsonify(results), 200
 
@@ -203,6 +250,8 @@ def handle_single_house_api(house_id):
         house.size = float(data.get('size')) if data.get('size') is not None else house.size
         house.type = data.get('type', house.type)
         house.equipment = data.get('equipment', house.equipment)
+        if 'image' in data:
+            house.image = (data.get('image') or '').strip() or None
         
         # 順便根據新地址自動重新計算「地區(area)」
         if 'location' in data:
@@ -228,6 +277,10 @@ DEFAULT_HOUSE_IMAGE = (
     "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85"
     "?q=80&w=1200&auto=format&fit=crop"
 )
+
+
+def _house_image_url(house):
+    return house.image or DEFAULT_HOUSE_IMAGE
 
 MATCH_THRESHOLD = 50
 MATCH_WEIGHTS = {
@@ -255,7 +308,7 @@ def _serialize_house(h, **extra):
         "size": h.size,
         "type": h.type,
         "equipment": h.equipment,
-        "image": DEFAULT_HOUSE_IMAGE,
+        "image": _house_image_url(h),
     }
     payload.update(extra)
     return payload
