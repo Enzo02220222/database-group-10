@@ -388,6 +388,8 @@ def _calc_area_score(preferred_area, house):
         return weight, "未設定地區偏好"
 
     preferred_area = preferred_area.strip()
+    h_area = house.area if house.area else ""
+    h_loc = house.location if house.location else ""
     if preferred_area in house.area or preferred_area in house.location:
         return weight, "地區完全符合"
 

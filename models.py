@@ -91,6 +91,7 @@ class RenterPreference(db.Model):
     max_budget = db.Column(db.Integer)
     move_date = db.Column(db.String(50)) # 預計搬入日期
     room_type = db.Column(db.String(50)) # 期望房型
+    preferred_area = db.Column(db.String(50))
 
 # ==============================================================================
 # 6. 租客收藏房屋關聯表 (多對多)
