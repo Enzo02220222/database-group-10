@@ -566,7 +566,7 @@ body{
         </a>
 
         <a class="nav-link" onclick="showPage('add')">
-            刊登房源
+            我的房源
         </a>
         
         <a class="nav-link" id="nav-profile" onclick="loadAndShowProfile()" style="display: none;">
@@ -1143,108 +1143,18 @@ body{
 <!-- ===================== ADD HOUSE ===================== -->
 
 <div id="page-add" class="page py-5">
-
-<div class="row justify-content-center">
-
-<div class="col-lg-8">
-
-<div class="card-modern">
-
-<h2 class="text-center fw-bold mb-2">
-    刊登房源
-</h2>
-
-<p class="text-center text-muted mb-5">
-    提供清楚完整的資訊，提升曝光效果
-</p>
-
-<div class="row g-3">
-
-<div class="col-md-6">
-
-<label class="form-label fw-bold">
-    地點
-</label>
-
-<input type="text"
-    id="add-loc"
-    class="form-control">
-
-</div>
-
-<div class="col-md-6">
-
-<label class="form-label fw-bold">
-    租金
-</label>
-
-<input type="number"
-    id="add-price"
-    class="form-control">
-
-</div>
-
-<div class="col-md-6">
-
-<label class="form-label fw-bold">
-    坪數
-</label>
-
-<input type="text"
-    id="add-size"
-    class="form-control">
-
-</div>
-
-<div class="col-md-6">
-    <label class="form-label fw-bold">房型</label>
-    <select id="add-type" class="form-select">
-        <option value="獨立套房">獨立套房</option>
-        <option value="分租套房">分租套房</option>
-        <option value="雅房">雅房</option>
-        <option value="整層住家">整層住家</option>
-    </select>
-</div>
-
-<div class="col-12">
-
-<label class="form-label fw-bold">
-    設備
-</label>
-
-<input type="text"
-    id="add-equip"
-    class="form-control">
-
-</div>
-
-<div class="col-12">
-
-<label class="form-label fw-bold">
-    圖片網址
-</label>
-
-<input type="url"
-    id="add-image"
-    class="form-control"
-    placeholder="https://example.com/house.jpg">
-
-</div>
-
-</div>
-
-<button class="btn-modern w-100 mt-4"
-            onclick="addNewHouse()">
-
-            發布房源
-        </button>
-
-        </div> </div> </div> </div> 
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">🏠 我的房源管理</h2>
+            <div class="text-muted">管理與追蹤您在平台刊登的所有房屋物件</div>
         </div>
+        <button class="btn-modern" onclick="openAddHouseModal()">
+            <i class="fa-solid fa-plus me-1"></i> 刊登新房源
+        </button>
+    </div>
 
-
-    </div> <div class="footer">
-    © 2026 RentHouse｜打造更舒服的租屋體驗
+    <div class="row g-4" id="my-houses-list"></div>
 </div>
 
 <script>
@@ -1347,6 +1257,10 @@ function showPage(pageId){
 
     if(pageId === 'favorite'){
         renderFavorites();
+    }
+
+    if(pageId === 'add'){
+            renderMyHouses();
     }
 
     if(pageId === 'match' && currentUser){
@@ -1906,6 +1820,191 @@ async function addNewHouse() {
         alert("無法連線至後端伺服器");
     }
 }
+// ✨ 新增：過濾並渲染目前登入房東專屬的房源清單
+async function renderMyHouses() {
+    if (!currentUser) return;
+    
+    const container = document.getElementById('my-houses-list');
+    if (!container) return;
+
+    try {
+        // 從後端獲取所有公開房源
+        const response = await fetch(`http://127.0.0.1:5000/api/houses`);
+        const allHouses = await response.json();
+        
+        // 🛡️ 關鍵過濾：只篩選出 landlord_id 與當前登入者相同的房源
+        const myHouses = allHouses.filter(h => h.landlord_id === currentUser.user_id);
+
+        if (myHouses.length === 0) {
+            container.innerHTML = `
+                <div class="col-12 text-center text-muted py-5">
+                    <h4 class="fw-bold">😔 您目前尚未刊登任何房源物件</h4>
+                    <p>點選右上方「刊登新房源」按鈕，快速發布您的第一個出租物件吧！</p>
+                </div>
+            `;
+            return;
+        }
+
+        // 將過濾出來的資料指派給暫存區，確保編輯修改按鈕的 index 對應精確
+        window.currentLoadedHouses = myHouses;
+
+        container.innerHTML = myHouses.map((h, index) => {
+            const displayImage = h.image || DEFAULT_HOUSE_IMAGE;
+            return `
+                <div class="col-md-6">
+                    <div class="house-card">
+                        <div class="house-img-wrap">
+                            <img src="${displayImage}" class="house-img">
+                        </div>
+                        <div class="house-body">
+                            <h5 class="house-title fw-bold">${h.location}</h5>
+                            <div class="house-price mt-2 mb-3">NT$ ${h.price} / 月</div>
+                            <div class="house-meta mb-3">
+                                <div class="meta-pill">${h.type || '獨立套房'}</div>
+                                <div class="meta-pill">${h.size || '不限'} 坪</div>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-sm btn-outline-secondary w-50" 
+                                        onclick="editHousePromptFromIndex(${index})">
+                                    ✏️ 修改細項
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger w-50" 
+                                        onclick="deleteHouseFromBackend(${h.id})">
+                                    🗑️ 下架移除
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+    } catch (error) {
+        console.error("載入我的房源失敗:", error);
+        container.innerHTML = `<div class="col-12 text-center text-danger py-5"><h4>無法連結資料庫取得房源資訊</h4></div>`;
+    }
+}
+
+// ✨ 新增：彈出刊登新房源視窗 (Modal)
+function openAddHouseModal() {
+    if (!currentUser || currentUser.role !== 'landlord') {
+        alert("❌ 權限不足：只有房東身分才能刊登新房源");
+        return;
+    }
+
+    const modalHtml = `
+        <div class="modal fade" id="addHouseModal" tabindex="-1" aria-hidden="true" style="backdrop-filter: blur(4px); z-index: 9999;">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content card-modern" style="border-radius: 24px; padding: 20px; background: white;">
+                    <div class="modal-header border-0 pb-0">
+                        <h4 class="fw-bold m-0">➕ 刊登新房源物件</h4>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body mt-2">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">房屋完整地址</label>
+                            <input type="text" id="add-loc" class="form-control" placeholder="例如：高雄市鼓山區蓮海路70號">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">每月租金 (NT$)</label>
+                            <input type="number" id="add-price" class="form-control" placeholder="例如：8500">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">坪數大小</label>
+                            <input type="number" id="add-size" class="form-control" placeholder="例如：7.5">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">房型設定</label>
+                            <select id="add-type" class="form-select">
+                                <option value="獨立套房">獨立套房</option>
+                                <option value="分租套房">分租套房</option>
+                                <option value="雅房">雅房</option>
+                                <option value="整層住家">整層住家</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">內部配置與設備</label>
+                            <input type="text" id="add-equip" class="form-control" placeholder="例如：冷氣、雙人床、獨立洗衣機">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">房屋外觀圖片網址</label>
+                            <input type="url" id="add-image" class="form-control" placeholder="https://example.com/room.jpg">
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 d-flex gap-2">
+                        <button type="button" class="btn btn-secondary w-50 m-0" style="border-radius:14px; padding:12px;" data-bs-dismiss="modal">取消</button>
+                        <button type="button" class="btn-modern w-50 m-0" style="border-radius:14px; padding:12px;" onclick="submitNewHouseFromModal()">發布物件</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    const oldModal = document.getElementById('addHouseModal');
+    if (oldModal) oldModal.remove();
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+    const myModal = new bootstrap.Modal(document.getElementById('addHouseModal'));
+    myModal.show();
+}
+
+// ✨ 新增：提交彈窗表單發布新房屋
+async function submitNewHouseFromModal() {
+    const location = document.getElementById('add-loc').value;
+    const price = document.getElementById('add-price').value;
+    const size = document.getElementById('add-size').value;
+    const type = document.getElementById('add-type').value;
+    const equipment = document.getElementById('add-equip').value;
+    const image = document.getElementById('add-image').value.trim();
+
+    if (!location || !price) {
+        alert("請完整填寫地點與租金資訊");
+        return;
+    }
+
+    try {
+        const response = await fetch('http://127.0.0.1:5000/api/houses', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                landlord_id: currentUser.user_id,
+                location: location,
+                price: int = parseInt(price),
+                size: float = parseFloat(size),
+                type: type,
+                equipment: equipment,
+                image: image
+            })
+        });
+
+        const result = await response.json();
+        alert(result.message);
+
+        if (response.ok) {
+            const modalEl = document.getElementById('addHouseModal');
+            const modalInstance = bootstrap.Modal.getInstance(modalEl);
+            if (modalInstance) modalInstance.hide();
+            
+            // 重新刷新後台列表頁面
+            renderMyHouses();
+        }
+    } catch (error) {
+        alert("發布房源失敗，請確認網路與後端服務狀態");
+    }
+}
+
+// ✨ 新增：從後台列表直接刪除並更新頁面的防呆函式
+async function deleteHouseFromBackend(id) {
+    if (!confirm(`⚠️ 確定要將此房源從系統實體刪除嗎？此動作將無法復原。`)) return;
+    try {
+        const response = await fetch(`http://127.0.0.1:5000/api/houses/${id}`, { method: 'DELETE' });
+        const result = await response.json();
+        alert(result.message);
+        renderMyHouses();
+    } catch (error) {
+        alert("刪除下架失敗");
+    }
+}
 
 // B. 透過 Index 動態生成並彈出完整細項修改視窗 (PUT)
 function editHousePromptFromIndex(index) {
@@ -2004,8 +2103,12 @@ async function submitEditHouse(id) {
         const modalEl = document.getElementById('editHouseModal');
         const modalInstance = bootstrap.Modal.getInstance(modalEl);
         if(modalInstance) modalInstance.hide();
-
-        renderSearch(); // 重新整理
+        if (document.getElementById('page-add').classList.contains('active-page')) {
+                    renderMyHouses();
+                } else {
+                    renderSearch(); 
+                }
+        //renderSearch(); // 重新整理
     } catch (error) {
         alert("修改失敗");
     }
