@@ -622,32 +622,17 @@ body{
         讓每一次找房都變得輕鬆簡單。
     </p>
 
-    <div class="hero-search">
-
+<div class="hero-search">
         <div class="row g-3 align-items-center">
-
-            <div class="col-md-5">
-                <input type="text"
-                    class="form-control"
-                    placeholder="搜尋地區">
+            <div class="col-md-9">
+                <input type="text" id="home-search-loc" class="form-control" placeholder="輸入想尋找的地區 (例如：高雄)">
             </div>
-
-            <div class="col-md-4">
-                <input type="number"
-                    class="form-control"
-                    placeholder="預算上限">
-            </div>
-
             <div class="col-md-3">
-                <button class="btn-modern w-100"
-                    onclick="showPage('search')">
-
-                    搜尋
+                <button class="btn-modern w-100" onclick="submitHomeSearch()">
+                    開始搜尋
                 </button>
             </div>
-
         </div>
-
     </div>
 
     <div class="stats">
@@ -1561,6 +1546,23 @@ async function renderSearch() {
     } catch (error) {
         console.error('搜尋失敗:', error);
     }
+}
+
+// ✨ 新增：首頁專屬的搜尋連動跳轉功能
+function submitHomeSearch() {
+    // 1. 取得首頁輸入的地區關鍵字
+    const homeLoc = document.getElementById('home-search-loc').value;
+    
+    // 2. 將這個關鍵字「同步填入」探索房源頁面的搜尋框中，讓體驗保持一致
+    const mainSearchLoc = document.getElementById('search-loc');
+    if (mainSearchLoc) {
+        mainSearchLoc.value = homeLoc;
+    }
+    
+    // 3. 切換到「探索房源」頁面
+    // (因為我們的 showPage('search') 裡面本來就會自動呼叫 renderSearch()，
+    // 所以它會直接抓取剛剛填入的值去跟後端要資料，完美無縫接軌！)
+    showPage('search');
 }
 
 // ✨ 新增：返回房源列表（保留原本的搜尋或媒合狀態）
@@ -2510,7 +2512,6 @@ async function runMatching() {
     try {
         const response = await fetch(`http://127.0.0.1:5000/api/match/${currentUser.user_id}`);
         
-        // 🛡️ 防護 1：檢查後端回傳的是不是 JSON，避免前端解析崩潰
         const contentType = response.headers.get("content-type");
         if (!contentType || !contentType.includes("application/json")) {
             console.error("後端回傳的不是 JSON，可能是 Python 報錯了！");
@@ -2518,7 +2519,6 @@ async function runMatching() {
             return;
         }
 
-        // 🛡️ 防護 2：檢查狀態碼
         if (!response.ok) {
             const err = await response.json();
             alert(err.message || "發生未知錯誤");
@@ -2537,29 +2537,51 @@ async function runMatching() {
 
         window.currentLoadedHouses = matchedHouses;
 
+        // ✨ 統一採用與一般搜尋相同的圖片卡片佈局
         container.innerHTML = matchedHouses.map(h => {
+            // 處理圖片防呆與收藏狀態
+            const displayImage = h.image || DEFAULT_HOUSE_IMAGE;
+            const isFav = (typeof favorites !== 'undefined' && favorites.includes(h.id)) ? 'active' : '';
+            
+            // 處理媒合原因字串
             const breakdown = h.match_breakdown || {};
             const reasons = Object.values(breakdown).map(item => item.reason).filter(Boolean).join('｜');
+            
             return `
-            <div class="col-md-12">
-                <div class="card-modern d-flex justify-content-between align-items-center p-4">
-                    <div>
-                        <span class="badge bg-success mb-2">🔥媒合指數：${h.match_score} 分</span>
-                        <h4 class="fw-bold m-0">${h.location}</h4>
-                        <div class="text-muted mt-1">${h.type} ｜ 📐 ${h.size} 坪 ｜ ⭐ ${h.avg_score || 0} 分 (${h.review_count || 0} 則評論)</div>
-                        <small class="text-secondary">${reasons}</small>
-                    </div>
-                    <div class="text-end">
-                        <h4 class="text-danger fw-bold mb-2">NT$ ${h.price} / 月</h4>
-                        <button class="btn btn-sm btn-primary" style="border-radius:10px; padding: 8px 16px;" onclick="showDetail(${h.id})">
-                            查看詳情
-                        </button>
+                <div class="col-md-6">
+                    <div class="house-card">
+                        <div class="house-img-wrap">
+                            <img src="${displayImage}" class="house-img">
+                            <div class="house-badge" style="background: var(--success); color: white; border: none; box-shadow: 0 4px 10px rgba(16,185,129,0.3);">
+                                🔥 媒合度 ${h.match_score} 分
+                            </div>
+                        </div>
+                        <div class="house-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h5 class="house-title">${h.location}</h5>
+                                    <div class="house-price mt-2">NT$ ${h.price} / 月</div>
+                                </div>
+                                <button class="favorite-btn ${isFav}" onclick="toggleFavorite(${h.id})">
+                                    <i class="fa-solid fa-heart"></i>
+                                </button>
+                            </div>
+                            <div class="house-meta">
+                                <div class="meta-pill">${h.type || '獨立套房'}</div>
+                                <div class="meta-pill">${h.size || '不限'} 坪</div>
+                            </div>
+                            
+                            <div class="mt-3 p-2 rounded" style="background: #f8fafc; font-size: 0.8rem; color: #64748b; border: 1px solid var(--border);">
+                                <i class="fa-solid fa-wand-magic-sparkles text-warning me-1"></i> ${reasons}
+                            </div>
+                            
+                            <button class="btn-modern w-100 mt-3" onclick="showDetail(${h.id})">查看詳情</button>
+                        </div>
                     </div>
                 </div>
-            </div>
-        `}).join('');
+            `;
+        }).join('');
     } catch (error) {
-        // 記錄真實錯誤，方便追蹤
         console.error("前端 JavaScript 執行發生錯誤:", error);
         alert("演算法前端渲染發生錯誤，請按 F12 開啟開發者工具 (Console) 查看詳細紀錄。");
     }
@@ -2567,9 +2589,7 @@ async function runMatching() {
 // ==============================================================================
 // 五、修復區塊：覆蓋舊版 renderSearch，讓「探索房源」的查看詳情按鈕正常運作
 // ==============================================================================
-// ==============================================================================
-// 五、修復區塊：覆蓋舊版 renderSearch，讓「探索房源」的查看詳情按鈕正常運作
-// ==============================================================================
+
 async function renderSearch() {
     
     // ✨ 關鍵修復：每次執行一般搜尋時，確保把搜尋結果區塊打開，並把智慧媒合區塊隱藏
