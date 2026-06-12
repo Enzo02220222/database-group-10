@@ -5,51 +5,36 @@ from models import db, User
 from models import Favorite, HouseFeedback
 
 app = Flask(__name__)
-CORS(app)  # 讓 Flask app 允許跨網域存取
+CORS(app)
 
-# 1. 資料庫基礎設定
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///renthouse.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# 2. 與 Flask app 綁定
 db.init_app(app)
-
 
 def _ensure_schema():
     db.create_all()
     inspector = inspect(db.engine)
     
-    # 檢查並補齊 renter_preferences 的 preferred_area
     if inspector.has_table('renter_preferences'):
         existing_columns = {col['name'] for col in inspector.get_columns('renter_preferences')}
         if 'preferred_area' not in existing_columns:
             with db.engine.begin() as connection:
                 connection.execute(text("ALTER TABLE renter_preferences ADD COLUMN preferred_area VARCHAR(50)"))
                 
-    # 檢查並補齊 users 的 avatar
     if inspector.has_table('users'):
         existing_columns = {col['name'] for col in inspector.get_columns('users')}
         if 'avatar' not in existing_columns:
             with db.engine.begin() as connection:
                 connection.execute(text("ALTER TABLE users ADD COLUMN avatar VARCHAR(255)"))
-
-    # 檢查並補齊 houses 的 image 欄位            
+           
     if inspector.has_table('houses'):
         existing_columns = {col['name'] for col in inspector.get_columns('houses')}
         if 'image' not in existing_columns:
             with db.engine.begin() as connection:
                 connection.execute(text("ALTER TABLE houses ADD COLUMN image VARCHAR(500)"))
 
-# ==============================================================================
 
-
-
-# ==============================================================================
-# 新增功能：身份驗證與權限管理 API
-# ==============================================================================
-
-
-# ［1. 登入 API］
 @app.route('/api/login', methods=['POST'])
 
 def login_api():
@@ -60,27 +45,23 @@ def login_api():
     if not email or not password:
         return jsonify({"message": "請填寫 Email 與密碼"}), 400
         
-    # 去資料庫撈這個帳密是否存在
     user = User.query.filter_by(email=email, password=password).first()
     
     if not user:
-        # 找不到代表帳密錯誤，回傳 401 狀態碼
         return jsonify({"message": "Email 或密碼錯誤"}), 401
-        
-    # 登入成功！把使用者的重要 Session 資訊打包回傳給前端
+
     return jsonify({
         "message": f"歡迎回來，{user.name}！",
         "user": {
             "user_id": user.user_id,
             "name": user.name,
             "email": user.email,
-            "role": user.role # 'tenant' 或 'landlord'
+            "role": user.role
         }
     }), 200
 
 @app.route('/api/register', methods=['POST'])
 def register():
-    # 接收前端傳的 JSON 資料
     data = request.get_json()
     
     name = data.get('name')
@@ -92,22 +73,18 @@ def register():
     gender = data.get('gender')
     job = data.get('job')
     
-    # 檢查必要欄位是否存在
     if not name or not email or not password:
         return jsonify({"message": "請完整填寫必要資料"}), 400
     
-    # 去資料庫查看此 Email 是否已經被註冊過
     existing_user = User.query.filter_by(email=email).first()
     
     if existing_user:
-        # 找得到資料代表被註冊過了，回傳 400 錯誤與提示訊息
         return jsonify({"message": "該 Email 已被註冊"}), 400
         
-    # 如果一切正常，建立新的 User 物件並存入資料庫
     new_user = User(
         name=name,
         email=email,
-        password=password,   # 尚未加密
+        password=password,
         phone=phone,
         role=role,
         age=int(age) if age else None,
@@ -115,7 +92,6 @@ def register():
         job=job
     )
     
-    # 把新物件存入資料庫並提交存檔
     db.session.add(new_user)
     db.session.commit()
     
@@ -128,7 +104,6 @@ def handle_user_profile(user_id):
     if not user:
         return jsonify({"message": "找不到該使用者"}), 404
 
-    # --- 讀取個人資料 (GET) ---
     if request.method == 'GET':
         return jsonify({
             "user_id": user.user_id,
@@ -140,16 +115,13 @@ def handle_user_profile(user_id):
             "job": user.job,
             "role": user.role,
             "avatar": user.avatar
-            # 注意：基於資安，不回傳 user.password
         }), 200
 
-    # --- 更新個人資料 (PUT) ---
     elif request.method == 'PUT':
         data = request.get_json()
-        
-        # 逐一更新欄位，如果有傳入值才更新，沒傳則維持原樣
+
         if 'password' in data and data['password'].strip():
-            user.password = data['password'] # 如果前端有輸入新密碼，才進行覆蓋
+            user.password = data['password']
             
         if 'phone' in data: user.phone = data['phone']
         if 'age' in data: user.age = int(data['age']) if data['age'] else None
@@ -160,17 +132,10 @@ def handle_user_profile(user_id):
         db.session.commit()
         return jsonify({"message": "個人資料更新成功！"}), 200
 
-# ==============================================================================
+from models import House
 
-# ==============================================================================
-# 新增功能：房屋資料增刪查改 (CRUD) 與篩選 API
-# ==============================================================================
-from models import House  # 確保有引入 House 模型
-
-# ［1. 刊登新房源 (POST) & 讀取/篩選所有房源 (GET)］
 @app.route('/api/houses', methods=['GET', 'POST'])
 def handle_houses_api():
-    # --- A. 刊登新房源 (Create) ---
     if request.method == 'POST':
         data = request.get_json()
         
@@ -188,25 +153,23 @@ def handle_houses_api():
         new_house = House(
             landlord_id=int(landlord_id),
             location=location,
-            area=location.split('區')[0] + '區' if '區' in location else '未知地區', # 簡易從地址抓地區
+            area=location.split('區')[0] + '區' if '區' in location else '未知地區',
             size=float(size) if size else 5.0,
             type=type_ if type_ else '獨立套房',
             price=int(price),
             image=image or None,
             equipment=equipment if equipment else '基本家具',
-            visibility=True # 預設直接上架
+            visibility=True
         )
         
         db.session.add(new_house)
         db.session.commit()
         return jsonify({"message": "房源刊登成功！", "house_id": new_house.house_id}), 201
 
-# --- B. 讀取與條件篩選 (Read) ---
     elif request.method == 'GET':
         search_loc = request.args.get('location', '')
         max_price = request.args.get('max_price')
-        
-        # 基礎查詢：只抓 visibility == True (未下架) 的房子
+
         query = House.query.filter_by(visibility=True)
         
         if search_loc:
@@ -216,7 +179,6 @@ def handle_houses_api():
             
         houses_list = query.all()
         
-        # 格式化成前端可以讀的陣列物件
         results = []
         for h in houses_list:
             results.append({
@@ -224,27 +186,22 @@ def handle_houses_api():
                 "landlord_id": h.landlord_id,
                 "location": h.location,
                 "price": h.price,
-                # 🎯 修正一：不要塞中文字「坪」在後端！傳回純數字，讓前端 input 可以完美讀取
                 "size": h.size, 
                 "type": h.type,
                 "equipment": h.equipment,
-                # 🎯 修正二：補上 100% 絕對存在、極高畫質的預設房屋圖片網址
                 "image": _house_image_url(h)
             })
         return jsonify(results), 200
 
-# ［2. 修改房源 (PUT) & 硬刪除房源 (DELETE)］
 @app.route('/api/houses/<int:house_id>', methods=['PUT', 'DELETE'])
 def handle_single_house_api(house_id):
     house = House.query.get(house_id)
     if not house:
         return jsonify({"message": "找不到該房源"}), 404
 
-    # --- C. 完整修改房源 (Update) ---
     if request.method == 'PUT':
         data = request.get_json()
         
-        # 允許前端修改所有細項欄位，如果前端沒傳該欄位，就維持原樣
         house.location = data.get('location', house.location)
         house.price = int(data.get('price')) if data.get('price') is not None else house.price
         house.size = float(data.get('size')) if data.get('size') is not None else house.size
@@ -253,24 +210,18 @@ def handle_single_house_api(house_id):
         if 'image' in data:
             house.image = (data.get('image') or '').strip() or None
         
-        # 順便根據新地址自動重新計算「地區(area)」
         if 'location' in data:
             house.area = data['location'].split('區')[0] + '區' if '區' in data['location'] else house.area
         
         db.session.commit()
         return jsonify({"message": "房源所有細項已成功更新！"}), 200
 
-    # --- D. 實體硬刪除房源 (Delete) ---
     elif request.method == 'DELETE':
-        # 1. 刪除：硬刪除，直接把這筆房屋資料從資料庫抹除 (Hard Delete)
         db.session.delete(house)
         db.session.commit()
         return jsonify({"message": "房源已從資料庫實體刪除！"}), 200
 
 
-# ==============================================================================
-# 三、互動與社交功能 API (收藏夾、評論與星等計算)
-# ==============================================================================
 from models import RenterPreference, HousePreference
 
 DEFAULT_HOUSE_IMAGE = (
@@ -438,8 +389,6 @@ def _serialize_preference(pref):
         "move_date": pref.move_date,
     }
 
-
-# ［3-1. 收藏夾：切換收藏狀態 (POST)］
 @app.route('/api/favorites/toggle', methods=['POST'])
 def toggle_favorite_api():
     data = request.get_json() or {}
@@ -480,8 +429,6 @@ def toggle_favorite_api():
         "house_id": house_id,
     }), 200
 
-
-# ［3-2. 收藏夾：讀取該使用者收藏的房源清單 (GET)］
 @app.route('/api/favorites/<int:user_id>', methods=['GET'])
 def get_user_favorites_api(user_id):
     user = User.query.get(user_id)
@@ -517,8 +464,6 @@ def get_user_favorites_api(user_id):
 
     return jsonify(results), 200
 
-
-# ［3-3. 收藏夾：查詢使用者已收藏的房源 ID 清單 (GET)］
 @app.route('/api/favorites/<int:user_id>/ids', methods=['GET'])
 def get_user_favorite_ids_api(user_id):
     user = User.query.get(user_id)
@@ -531,8 +476,6 @@ def get_user_favorite_ids_api(user_id):
     ]
     return jsonify({"house_ids": house_ids}), 200
 
-
-# ［3-4. 房屋評論：新增評論並動態更新房東綜合評分 (POST)］
 @app.route('/api/houses/<int:house_id>/feedback', methods=['POST'])
 def add_house_feedback_api(house_id):
     house = House.query.get(house_id)
@@ -590,8 +533,6 @@ def add_house_feedback_api(house_id):
         "landlord_rating": landlord_rating,
     }), 201
 
-
-# ［3-5. 房屋評論：讀取特定房屋的評論清單 (GET)］
 @app.route('/api/houses/<int:house_id>/feedbacks', methods=['GET'])
 def get_house_feedbacks_api(house_id):
     house = House.query.get(house_id)
@@ -623,12 +564,6 @@ def get_house_feedbacks_api(house_id):
         "feedbacks": results,
     }), 200
 
-
-# ==============================================================================
-# 四、租客需求媒合核心 API (基本框架與加權演算法架構)
-# ==============================================================================
-
-# ［4-1. 租客需求儲存：建立或更新租客的租屋偏好 (POST)］
 @app.route('/api/preferences', methods=['POST'])
 def save_renter_preference_api():
     data = request.get_json() or {}
@@ -681,8 +616,6 @@ def save_renter_preference_api():
         "preference": _serialize_preference(pref),
     }), 200
 
-
-# ［4-2. 租客需求讀取 (GET)］
 @app.route('/api/preferences/<int:renter_id>', methods=['GET'])
 def get_renter_preference_api(renter_id):
     renter = User.query.get(renter_id)
@@ -695,8 +628,6 @@ def get_renter_preference_api(renter_id):
 
     return jsonify(_serialize_preference(pref)), 200
 
-
-# ［4-3. 智慧媒合演算法：根據偏好權重篩選推薦房源 (GET)］
 @app.route('/api/match/<int:renter_id>', methods=['GET'])
 def match_houses_api(renter_id):
     renter = User.query.get(renter_id)
