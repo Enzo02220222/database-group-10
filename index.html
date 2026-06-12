@@ -1131,7 +1131,7 @@ body{
     
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h2 class="fw-bold mb-1">🏠 我的房源管理</h2>
+            <h2 class="fw-bold mb-1"> 我的房源管理</h2>
             <div class="text-muted">管理與追蹤您在平台刊登的所有房屋物件</div>
         </div>
         <button class="btn-modern" onclick="openAddHouseModal()">
@@ -1211,19 +1211,14 @@ let favorites = [];
 /* PAGE */
 
 function showPage(pageId){
-
-    /* 🔒 新增：前端頁面層級的權限阻擋邏輯 */
-    
-    // A. 訪客權限阻擋：沒登入想偷偷進去「刊登房源 (add)」或「我的收藏 (favorite)」
     if ((pageId === 'add' || pageId === 'favorite') && !currentUser) {
-        alert("🔒 權限不足！請先登入帳號才能使用該功能。");
-        showPage('login'); // 強制彈回登入頁
+        alert(" 權限不足！請先登入帳號才能使用該功能。");
+        showPage('login');
         return;
     }
     
-    // B. 房客權限阻擋：你是房客(tenant)身分，卻想偷點進去「刊登房源 (add)」
     if (pageId === 'add' && currentUser && currentUser.role !== 'landlord') {
-        alert("❌ 權限阻擋：只有「房東」身分可以進入刊登頁面！");
+        alert(" 權限阻擋：只有「房東」身分可以進入刊登頁面！");
         showPage('index');
         return;
     }
@@ -1284,9 +1279,9 @@ async function register(){
                 password: password,
                 phone: phone,
                 role: role,
-                age: age ? parseInt(age) : null, // 若有填寫則轉為數字，否則傳 null
-                gender: gender || null,          // 若無選擇則傳 null
-                job: job || null                 // 若有填寫則傳送，否則傳 null
+                age: age ? parseInt(age) : null, 
+                gender: gender || null,
+                job: job || null 
             })
         });
 
@@ -1307,19 +1302,16 @@ async function register(){
 
 /* LOGIN */
 
-// 1. 頁面初始化：每次重開網頁時，自動檢查 localStorage 有沒有保留登入狀態 (Session 保持)
 document.addEventListener("DOMContentLoaded", function() {
     const savedUser = localStorage.getItem('currentUser');
     if (savedUser) {
         currentUser = JSON.parse(savedUser);
         console.log("【Session 保持成功】目前登入者為:", currentUser.name);
     }
-    // 💡 確保不論有無登入，網頁一開起來就刷新一次導覽列狀態
     updateNavbarStatus();
     syncFavoriteIds();
 });
 
-// 2. 登入函式保持不變，但在 response.ok 成功時必須觸發刷新 UI
 async function login() {
     const email = document.getElementById('login-email').value;
     const password = document.getElementById('login-password').value;
@@ -1345,7 +1337,6 @@ async function login() {
             localStorage.setItem('currentUser', JSON.stringify(currentUser));
             await syncFavoriteIds();
             
-            // 💡 關鍵：登入成功後，立刻叫導覽列重新整理、把登入註冊藏起來
             updateNavbarStatus();
             showPage('index'); 
         } else {
@@ -1357,43 +1348,37 @@ async function login() {
     }
 }
 
-// 3. 自動隱藏登入/註冊、秀出「登出 (Hi, 姓名)」
 function updateNavbarStatus() {
     console.log("目前權限角色為:", currentUser ? currentUser.role : "訪客");
     
-    // 抓取剛才設定 id 的 HTML 元素
     const loginBtn = document.getElementById('nav-login');
     const registerBtn = document.getElementById('nav-register');
     const logoutBtn = document.getElementById('nav-logout');
     const profileBtn = document.getElementById('nav-profile');
     
     if (currentUser) {
-        // ==== 代表「已登入成功」的變形狀態 ====
-        if (loginBtn) loginBtn.style.display = 'none';       // 隱藏登入按鈕
-        if (registerBtn) registerBtn.style.display = 'none'; // 隱藏註冊按鈕
-        if (profileBtn) profileBtn.style.display = 'block';  // 顯示會員中心按鈕
+        if (loginBtn) loginBtn.style.display = 'none';
+        if (registerBtn) registerBtn.style.display = 'none';
+        if (profileBtn) profileBtn.style.display = 'block';
         if (logoutBtn) {
-            logoutBtn.style.display = 'block';               // 秀出登出按鈕
-            logoutBtn.innerText = `登出 (Hi, ${currentUser.name})`; // 注入大大的歡迎名字！
+            logoutBtn.style.display = 'block';
+            logoutBtn.innerText = `登出 (Hi, ${currentUser.name})`;
         }
     } else {
-        // ==== 代表「未登入 / 訪客」的預設狀態 ====
-        if (loginBtn) loginBtn.style.display = 'block';       // 顯示預設探索
-        if (registerBtn) registerBtn.style.display = 'block'; // 顯示預設收藏
-        if (logoutBtn) logoutBtn.style.display = 'none';       // 隱藏登出鍵
-        if (profileBtn) profileBtn.style.display = 'none';    // 隱藏會員中心按鈕
+        if (loginBtn) loginBtn.style.display = 'block';
+        if (registerBtn) registerBtn.style.display = 'block';
+        if (logoutBtn) logoutBtn.style.display = 'none';
+        if (profileBtn) profileBtn.style.display = 'none';
     }
 }
 
-// 4. 安全登出功能：清空所有網頁快取快照並刷新
 function logout() {
     currentUser = null;
     localStorage.removeItem('currentUser');
     alert("已安全登出帳號");
-    location.reload(); // 重新整理網頁，徹底回歸訪客乾淨狀態
+    location.reload();
 }
 
-// 5. 載入個人資料頁面：從後端撈取最新的個人資料，填入表單，並顯示會員中心頁面
 async function loadAndShowProfile() {
     if (!currentUser) return;
     
@@ -1406,7 +1391,6 @@ async function loadAndShowProfile() {
         
         const userData = await response.json();
         
-        // 將後端回傳的資料填入 Input
         document.getElementById('prof-name').value = userData.name || '';
         document.getElementById('prof-phone').value = userData.phone || '';
         document.getElementById('prof-age').value = userData.age || '';
@@ -1414,10 +1398,8 @@ async function loadAndShowProfile() {
         document.getElementById('prof-job').value = userData.job || '';
         document.getElementById('prof-avatar').value = userData.avatar || '';
         
-        // 更新大頭貼預覽
         document.getElementById('profile-avatar-preview').src = userData.avatar || 'https://via.placeholder.com/100';
-        
-        // 密碼欄位預設清空 (不顯示明文)
+
         document.getElementById('prof-password').value = '';
         
         showPage('profile');
@@ -1428,7 +1410,6 @@ async function loadAndShowProfile() {
     }
 }
 
-// 更新個人資料：允許修改密碼、電話、年齡、性別、職業、以及大頭貼網址
 async function updateProfile() {
     if (!currentUser) return;
     
@@ -1449,7 +1430,7 @@ async function updateProfile() {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                password: password, // 若為空字串，後端會略過更新
+                password: password,
                 phone: phone,
                 age: age ? parseInt(age) : null,
                 gender: gender,
@@ -1461,7 +1442,6 @@ async function updateProfile() {
         const result = await response.json();
         if (response.ok) {
             alert(result.message);
-            // 重新載入以顯示最新狀態
             loadAndShowProfile(); 
         } else {
             alert(result.message);
@@ -1491,13 +1471,11 @@ async function renderSearch() {
             return;
         }
 
-        // 將後端撈出來的整包資料塞入 window 暫存區，確保資料格式不失真
         window.currentLoadedHouses = backendHouses;
 
         result.innerHTML = backendHouses.map((h, index) => {
             let landlordControls = '';
             
-            // 🔒 權限驗證：房東本人才能看到按鈕
             if (currentUser && currentUser.role === 'landlord' && currentUser.user_id === h.landlord_id) {
                 landlordControls = `
                     <div class="d-flex gap-2 mt-2">
@@ -1513,7 +1491,6 @@ async function renderSearch() {
                 `;
             }
 
-            // 💡 修正圖片網址：如果後端給的是假網址，我們預設給一張絕對看得到的房屋圖
             const displayImage = h.image || DEFAULT_HOUSE_IMAGE;
 
             return `
@@ -1548,24 +1525,17 @@ async function renderSearch() {
     }
 }
 
-// ✨ 新增：首頁專屬的搜尋連動跳轉功能
 function submitHomeSearch() {
-    // 1. 取得首頁輸入的地區關鍵字
     const homeLoc = document.getElementById('home-search-loc').value;
     
-    // 2. 將這個關鍵字「同步填入」探索房源頁面的搜尋框中，讓體驗保持一致
     const mainSearchLoc = document.getElementById('search-loc');
     if (mainSearchLoc) {
         mainSearchLoc.value = homeLoc;
     }
     
-    // 3. 切換到「探索房源」頁面
-    // (因為我們的 showPage('search') 裡面本來就會自動呼叫 renderSearch()，
-    // 所以它會直接抓取剛剛填入的值去跟後端要資料，完美無縫接軌！)
     showPage('search');
 }
 
-// ✨ 新增：返回房源列表（保留原本的搜尋或媒合狀態）
 function goBackToSearch() {
     document.querySelectorAll('.page').forEach(page => {
         page.classList.remove('active-page');
@@ -1759,13 +1729,7 @@ function renderFavorites(){
     `).join('');
 }
 
-/* ADD HOUSE */
 
-/* ADD HOUSE & CRUD CONTROLS */
-
-/* ADD HOUSE & CRUD CONTROLS */
-
-// A. 刊登新房源 (POST)
 async function addNewHouse() {
     if (!currentUser) {
         alert("請先登入");
@@ -1822,7 +1786,7 @@ async function addNewHouse() {
         alert("無法連線至後端伺服器");
     }
 }
-// ✨ 新增：過濾並渲染目前登入房東專屬的房源清單
+
 async function renderMyHouses() {
     if (!currentUser) return;
     
@@ -1830,11 +1794,9 @@ async function renderMyHouses() {
     if (!container) return;
 
     try {
-        // 從後端獲取所有公開房源
         const response = await fetch(`http://127.0.0.1:5000/api/houses`);
         const allHouses = await response.json();
         
-        // 🛡️ 關鍵過濾：只篩選出 landlord_id 與當前登入者相同的房源
         const myHouses = allHouses.filter(h => h.landlord_id === currentUser.user_id);
 
         if (myHouses.length === 0) {
@@ -1847,7 +1809,6 @@ async function renderMyHouses() {
             return;
         }
 
-        // 將過濾出來的資料指派給暫存區，確保編輯修改按鈕的 index 對應精確
         window.currentLoadedHouses = myHouses;
 
         container.innerHTML = myHouses.map((h, index) => {
@@ -1887,10 +1848,9 @@ async function renderMyHouses() {
     }
 }
 
-// ✨ 新增：彈出刊登新房源視窗 (Modal)
 function openAddHouseModal() {
     if (!currentUser || currentUser.role !== 'landlord') {
-        alert("❌ 權限不足：只有房東身分才能刊登新房源");
+        alert(" 權限不足：只有房東身分才能刊登新房源");
         return;
     }
 
@@ -1950,7 +1910,6 @@ function openAddHouseModal() {
     myModal.show();
 }
 
-// ✨ 新增：提交彈窗表單發布新房屋
 async function submitNewHouseFromModal() {
     const location = document.getElementById('add-loc').value;
     const price = document.getElementById('add-price').value;
@@ -1987,7 +1946,6 @@ async function submitNewHouseFromModal() {
             const modalInstance = bootstrap.Modal.getInstance(modalEl);
             if (modalInstance) modalInstance.hide();
             
-            // 重新刷新後台列表頁面
             renderMyHouses();
         }
     } catch (error) {
@@ -1995,9 +1953,8 @@ async function submitNewHouseFromModal() {
     }
 }
 
-// ✨ 新增：從後台列表直接刪除並更新頁面的防呆函式
 async function deleteHouseFromBackend(id) {
-    if (!confirm(`⚠️ 確定要將此房源從系統實體刪除嗎？此動作將無法復原。`)) return;
+    if (!confirm(` 確定要將此房源從系統實體刪除嗎？此動作將無法復原。`)) return;
     try {
         const response = await fetch(`http://127.0.0.1:5000/api/houses/${id}`, { method: 'DELETE' });
         const result = await response.json();
@@ -2008,7 +1965,6 @@ async function deleteHouseFromBackend(id) {
     }
 }
 
-// B. 透過 Index 動態生成並彈出完整細項修改視窗 (PUT)
 function editHousePromptFromIndex(index) {
     const h = window.currentLoadedHouses[index];
     if (!h) {
@@ -2016,7 +1972,6 @@ function editHousePromptFromIndex(index) {
         return;
     }
 
-    // 清除後端拼上去的「坪」字，還原成純數字
     const pureSize = parseFloat(h.size) || 0;
 
     const modalHtml = `
@@ -2071,12 +2026,10 @@ function editHousePromptFromIndex(index) {
     if (oldModal) oldModal.remove();
     document.body.insertAdjacentHTML('beforeend', modalHtml);
 
-    // 強制用 Bootstrap 核心框架把 Modal 叫醒
     const myModal = new bootstrap.Modal(document.getElementById('editHouseModal'));
     myModal.show();
 }
 
-// 提交修改到後端 API
 async function submitEditHouse(id) {
     const location = document.getElementById('edit-loc').value;
     const price = document.getElementById('edit-price').value;
@@ -2110,13 +2063,11 @@ async function submitEditHouse(id) {
                 } else {
                     renderSearch(); 
                 }
-        //renderSearch(); // 重新整理
     } catch (error) {
         alert("修改失敗");
     }
 }
 
-// C. 實體硬下架/刪除房屋 (DELETE)
 async function deleteHouse(id) {
     if (!confirm(`⚠️ 警告：目前為「硬刪除」模式。\n確定要將這間編號為 ${id} 的房源從資料庫徹底移除嗎？此操作不可逆！`)) return;
 
@@ -2126,17 +2077,12 @@ async function deleteHouse(id) {
         });
         const result = await response.json();
         alert(result.message);
-        renderSearch(); // 刷新網頁，該房屋將永遠消失
+        renderSearch();
     } catch (error) {
         alert("下架刪除失敗");
     }
 }
 
-/* ==============================================================================
-   三、互動與社交功能：動態串接區 (新增區塊，系統將自動優先使用此版本)
-   ============================================================================== */
-
-// A. 切換收藏狀態 (POST)
 async function syncFavoriteIds() {
     if (!currentUser) {
         favorites = [];
@@ -2152,7 +2098,6 @@ async function syncFavoriteIds() {
     }
 }
 
-// A. 切換收藏狀態 (POST) - 已移除成功彈窗
 async function toggleFavorite(id) {
     if (!currentUser) {
         alert("請先登入帳號再執行收藏動作");
@@ -2168,17 +2113,12 @@ async function toggleFavorite(id) {
         
         const result = await response.json();
         
-        // 只有在「發生錯誤」時才跳出警告（例如：房屋已下架），成功時保持安靜
         if (!response.ok) {
             alert(result.message);
             return;
         }
         
-        // 更新前端的收藏清單資料
         await syncFavoriteIds();
-        
-        // ✨ 已將原本的 alert(result.message); 刪除
-        // 直接重新渲染畫面，讓愛心圖示瞬間變色，提供無干擾的滑順體驗
         renderSearch();
         
     } catch (error) {
@@ -2187,7 +2127,6 @@ async function toggleFavorite(id) {
     }
 }
 
-// B. 渲染收藏夾頁面 (GET)
 async function renderFavorites() {
     if (!currentUser) return;
     try {
@@ -2220,8 +2159,6 @@ async function renderFavorites() {
     }
 }
 
-// C. 點擊進入詳情頁面：動態抓取評論列表並提供撰寫表單
-// C. 點擊進入詳情頁面：動態抓取評論列表並提供撰寫表單
 async function showDetail(id) {
     const house = window.currentLoadedHouses ? window.currentLoadedHouses.find(h => h.id === id) : null;
     if (!house) {
@@ -2237,7 +2174,6 @@ async function showDetail(id) {
         const reviewCount = feedbackData.review_count ?? feedbacks.length;
         const landlordRating = feedbackData.landlord_rating || 0;
 
-        // 建立撰寫心得表單 (僅限房客角色填寫)
         let feedbackFormHtml = '';
         if (currentUser && currentUser.role === 'tenant') {
             feedbackFormHtml = `
@@ -2312,16 +2248,14 @@ async function showDetail(id) {
     }
 }
 
-// ✨ 新增：串接後端獲取房東資訊，並顯示聯絡彈出視窗
 async function showLandlordContact(landlordId) {
     if (!currentUser) {
-        alert("🔒 請先登入會員，才能查看房東聯絡資訊保護隱私喔！");
+        alert(" 請先登入會員，才能查看房東聯絡資訊保護隱私喔！");
         showPage('login');
         return;
     }
 
     try {
-        // 呼叫原本你已經寫好的獲取使用者資料 API
         const response = await fetch(`http://127.0.0.1:5000/api/users/${landlordId}`);
         if (!response.ok) {
             alert("無法取得房東資訊");
@@ -2330,7 +2264,6 @@ async function showLandlordContact(landlordId) {
         
         const landlord = await response.json();
 
-        // 建立質感的 Bootstrap 彈出視窗 (Modal)
         const modalHtml = `
             <div class="modal fade" id="landlordContactModal" tabindex="-1" aria-hidden="true" style="backdrop-filter: blur(4px); z-index: 9999;">
                 <div class="modal-dialog modal-dialog-centered modal-sm">
@@ -2361,22 +2294,17 @@ async function showLandlordContact(landlordId) {
             </div>
         `;
 
-        // 避免重複生成，先移除舊的 modal
         const oldModal = document.getElementById('landlordContactModal');
         if (oldModal) oldModal.remove();
-
-        // 將 Modal 插入頁面並顯示
         document.body.insertAdjacentHTML('beforeend', modalHtml);
         const contactModal = new bootstrap.Modal(document.getElementById('landlordContactModal'));
         contactModal.show();
-
     } catch (error) {
         console.error("獲取房東資訊失敗:", error);
         alert("伺服器連線異常，無法獲取房東資訊");
     }
 }
 
-// D. 送出新增評論到後端 (POST)
 async function submitFeedback(id) {
     const score = document.getElementById('new-score').value;
     const comment = document.getElementById('new-comment').value;
@@ -2398,12 +2326,6 @@ async function submitFeedback(id) {
     }
 }
 
-
-/* ==============================================================================
-   四、租客需求媒合：動態串接區 (新增區塊)
-   ============================================================================== */
-
-// A. 讀取已儲存的偏好設定 (GET)
 async function loadSavedPreferences() {
     if (!currentUser) return;
     try {
@@ -2419,7 +2341,6 @@ async function loadSavedPreferences() {
     }
 }
 
-// B. 儲存偏好數據框架到後端 (POST)
 async function savePreference() {
     if (!currentUser) {
         alert("請先登入帳號");
@@ -2456,7 +2377,6 @@ async function savePreference() {
     }
 }
 
-// ✨ 新增：儲存需求並自動執行智慧媒合搜尋
 async function saveAndMatch() {
     if (!currentUser) {
         alert("請先登入帳號");
@@ -2470,7 +2390,6 @@ async function saveAndMatch() {
     const preferredArea = document.getElementById('match-preferred-area').value;
 
     try {
-        // 第一步：發送 POST 請求儲存租屋需求
         const response = await fetch('http://127.0.0.1:5000/api/preferences', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -2489,7 +2408,6 @@ async function saveAndMatch() {
             return;
         }
         
-        // 第二步：儲存成功後，不跳出多餘的確認視窗，直接執行智慧媒合演算法渲染結果
         await runMatching();
         
     } catch (error) {
@@ -2498,7 +2416,6 @@ async function saveAndMatch() {
     }
 }
 
-// C. 呼叫後端智慧演算法，加權計算並顯示媒合比例 (GET)
 async function runMatching() {
     if (!currentUser) {
         alert("請先登入帳號");
@@ -2537,13 +2454,10 @@ async function runMatching() {
 
         window.currentLoadedHouses = matchedHouses;
 
-        // ✨ 統一採用與一般搜尋相同的圖片卡片佈局
         container.innerHTML = matchedHouses.map(h => {
-            // 處理圖片防呆與收藏狀態
             const displayImage = h.image || DEFAULT_HOUSE_IMAGE;
             const isFav = (typeof favorites !== 'undefined' && favorites.includes(h.id)) ? 'active' : '';
             
-            // 處理媒合原因字串
             const breakdown = h.match_breakdown || {};
             const reasons = Object.values(breakdown).map(item => item.reason).filter(Boolean).join('｜');
             
@@ -2586,20 +2500,14 @@ async function runMatching() {
         alert("演算法前端渲染發生錯誤，請按 F12 開啟開發者工具 (Console) 查看詳細紀錄。");
     }
 }
-// ==============================================================================
-// 五、修復區塊：覆蓋舊版 renderSearch，讓「探索房源」的查看詳情按鈕正常運作
-// ==============================================================================
 
 async function renderSearch() {
-    
-    // ✨ 關鍵修復：每次執行一般搜尋時，確保把搜尋結果區塊打開，並把智慧媒合區塊隱藏
     const searchContainer = document.getElementById('search-results');
     const matchContainer = document.getElementById('match-results');
     if (searchContainer) searchContainer.style.display = 'flex';
     if (matchContainer) matchContainer.style.display = 'none';
 
     const loc = document.getElementById('search-loc') ? document.getElementById('search-loc').value : '';
-    // 注意：因為你之前把 search-price 的 input 刪掉了，這裡抓不到會回傳空字串，後端會自動忽略租金條件，這是正常的！
     const price = document.getElementById('search-price') ? document.getElementById('search-price').value : '';
 
     try {
@@ -2614,23 +2522,21 @@ async function renderSearch() {
             return;
         }
 
-        // 將後端撈出來的資料塞入暫存區，確保 showDetail 可以讀取到
         window.currentLoadedHouses = backendHouses;
 
         result.innerHTML = backendHouses.map((h, index) => {
             let landlordControls = '';
             
-            // 房東專屬的修改與刪除按鈕
             if (currentUser && currentUser.role === 'landlord' && currentUser.user_id === h.landlord_id) {
                 landlordControls = `
                     <div class="d-flex gap-2 mt-2">
                         <button class="btn btn-sm btn-outline-secondary w-50" 
                                 onclick="editHousePromptFromIndex(${index})">
-                            ✏️ 修改細項
+                             修改細項
                         </button>
                         <button class="btn btn-sm btn-outline-danger w-50" 
                                 onclick="deleteHouse(${h.id})">
-                            🗑️ 強制刪除
+                             強制刪除
                         </button>
                     </div>
                 `;
@@ -2638,7 +2544,6 @@ async function renderSearch() {
 
             const displayImage = h.image || DEFAULT_HOUSE_IMAGE;
 
-            // 確保 favorite 變數存在，加上安全判斷
             const isFav = (typeof favorites !== 'undefined' && favorites.includes(h.id)) ? 'active' : '';
 
             return `
